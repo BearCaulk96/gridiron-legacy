@@ -6,4 +6,11 @@ export default defineConfig({
   plugins: [react()],
   // GitHub Pages serves from /gridiron-legacy/
   base: process.env.GITHUB_PAGES === 'true' ? '/gridiron-legacy/' : '/',
+  preview: {
+    // Allow Cloudflare quick tunnels (and similar) during phone testing
+    allowedHosts: true,
+  },
+  server: {
+    allowedHosts: true,
+  },
 })
