@@ -1,0 +1,117 @@
+import { useState } from 'react';
+import { TitleScreen } from './components/TitleScreen';
+import { Setup } from './components/Setup';
+import { Shell } from './components/Shell';
+import { HeadOffice } from './components/HeadOffice';
+import { Roster } from './components/Roster';
+import { Coaches } from './components/Coaches';
+import { Draft } from './components/Draft';
+import { Trade } from './components/Trade';
+import { FreeAgency } from './components/FreeAgency';
+import { Standings } from './components/Standings';
+import { Cap } from './components/Cap';
+import { GameDay } from './components/GameDay';
+import { useLeague } from './hooks/useLeague';
+import { hasSave } from './game/save';
+
+export default function App() {
+  const game = useLeague();
+  const [setupTeamId, setSetupTeamId] = useState<string | undefined>();
+
+  if (game.screen === 'landing') {
+    return (
+      <>
+        <TitleScreen
+          hasSave={hasSave()}
+          onContinue={game.continueGame}
+          onNew={(teamId) => {
+            setSetupTeamId(teamId);
+            game.setScreen('setup');
+          }}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  if (game.screen === 'setup' || !game.state) {
+    return (
+      <>
+        <Setup
+          initialTeamId={setupTeamId}
+          onBack={() => game.setScreen('landing')}
+          onStart={game.newGame}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  const { state, actions } = game;
+
+  // Team-themed Head Office is the full-screen dynasty home.
+  if (game.screen === 'hub') {
+    return (
+      <>
+        <HeadOffice
+          state={state}
+          onPlayGame={() => game.setScreen('gameday')}
+          onAdvanceCalendar={actions.advanceCalendar}
+          onOpen={game.setScreen}
+          onTitle={game.goTitle}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  if (game.screen === 'gameday') {
+    return (
+      <>
+        <GameDay
+          state={state}
+          onFinish={actions.completeLiveGame}
+          onBack={() => game.setScreen('hub')}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  if (game.screen === 'freeAgency') {
+    return (
+      <>
+        <FreeAgency
+          state={state}
+          onSign={actions.signFA}
+          onFinish={actions.finishFreeAgencyWeek}
+          onBack={() => game.setScreen('hub')}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Shell state={state} screen={game.screen} setScreen={game.setScreen} onAbandon={game.abandon}>
+        {game.screen === 'roster' && <Roster state={state} onRelease={actions.release} />}
+        {game.screen === 'coaches' && <Coaches state={state} />}
+        {game.screen === 'draft' && (
+          <Draft
+            state={state}
+            onDraft={actions.draftPlayer}
+            onScout={actions.scout}
+            onSimRest={actions.simDraft}
+            onFinish={actions.advanceCalendar}
+            onBack={() => game.setScreen('hub')}
+          />
+        )}
+        {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}
+        {game.screen === 'standings' && <Standings state={state} />}
+        {game.screen === 'cap' && <Cap state={state} />}
+      </Shell>
+      {game.toast && <div className="toast">{game.toast}</div>}
+    </>
+  );
+}
