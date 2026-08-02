@@ -338,9 +338,8 @@ export function HeadOffice({
       <aside className="office-right">
         <div className="office-team-card">
           <div className="office-team-head">
-            <TeamLogo team={team} size={30} />
+            <TeamLogo team={team} size={22} />
             <div>
-              <small>{theme.tagline}</small>
               <h2>
                 {team.city.toUpperCase()} {team.name.toUpperCase()}
               </h2>
@@ -350,52 +349,51 @@ export function HeadOffice({
             <li>
               <span>Record</span>
               <strong>
-                {team.wins} - {team.losses}
-                {team.ties ? ` - ${team.ties}` : ''}
+                {team.wins}-{team.losses}
+                {team.ties ? `-${team.ties}` : ''}
               </strong>
             </li>
             <li>
-              <span>Division</span>
-              <strong>{ordinal(Math.max(1, divRank))}</strong>
+              <span>Div / Conf</span>
+              <strong>
+                {ordinal(Math.max(1, divRank))} / {ordinal(Math.max(1, confRank))}
+              </strong>
             </li>
             <li>
-              <span>Conference</span>
-              <strong>{ordinal(Math.max(1, confRank))}</strong>
+              <span>OVR / Cap</span>
+              <strong>
+                {power} · {formatMoney(cap)}
+              </strong>
             </li>
             <li>
-              <span>Team Overall</span>
-              <strong>{power}</strong>
-            </li>
-            <li>
-              <span>Cap Space</span>
-              <strong>{formatMoney(cap)}</strong>
-            </li>
-            <li>
-              <span>Fan Approval</span>
+              <span>Fans</span>
               <strong>{fanApproval}%</strong>
             </li>
           </ul>
         </div>
 
-        <div className="office-cal-stamp">
-          <small>{formatCalendarLabel(cal, state.season)}</small>
-          <strong>{cal.title}</strong>
-        </div>
-        <button className="office-play" onClick={play}>
-          <IconFootball />
-          <span>
-            <strong>PLAY NOW</strong>
-            <small>{playLabel}</small>
-          </span>
-        </button>
-        {(cal.playAction === 'freeAgency' ||
-          cal.playAction === 'draft' ||
-          cal.playAction === 'roster' ||
-          cal.playAction === 'coaches') && (
-          <button className="office-advance" onClick={onAdvanceCalendar}>
-            Continue Week →
+        <div className="office-actions">
+          <div className="office-cal-stamp">
+            <small>{formatCalendarLabel(cal, state.season)}</small>
+            <strong>{cal.title}</strong>
+          </div>
+          {(cal.playAction === 'freeAgency' ||
+            cal.playAction === 'draft' ||
+            cal.playAction === 'roster' ||
+            cal.playAction === 'coaches' ||
+            cal.playAction === 'resolve') && (
+            <button className="office-advance" onClick={onAdvanceCalendar}>
+              Continue Week →
+            </button>
+          )}
+          <button className="office-play" onClick={play}>
+            <IconFootball />
+            <span>
+              <strong>PLAY NOW</strong>
+              <small>{playLabel}</small>
+            </span>
           </button>
-        )}
+        </div>
       </aside>
 
       <footer className="office-news">
