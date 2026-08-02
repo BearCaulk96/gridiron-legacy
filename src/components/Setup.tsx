@@ -43,43 +43,47 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
           <button type="button" className="btn btn-ghost btn-small" onClick={onBack}>
             Back
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => onStart(teamId, difficulty)}>
+          <button type="button" className="btn btn-primary btn-small" onClick={() => onStart(teamId, difficulty)}>
             Take the Job
           </button>
         </div>
       </header>
 
       <section className="setup-diff" aria-label="Difficulty">
-        <div className="setup-diff-grid">
+        <div className="setup-diff-label">
+          <span className="tag">Difficulty</span>
+          <span className="setup-diff-hint">{cfg.tagline}</span>
+        </div>
+        <div className="setup-diff-grid" role="radiogroup" aria-label="Difficulty">
           {(Object.keys(DIFFICULTIES) as Difficulty[]).map((id) => {
             const d = DIFFICULTIES[id];
             return (
               <button
                 key={id}
                 type="button"
+                role="radio"
+                aria-checked={difficulty === id}
                 className={`setup-diff-card ${difficulty === id ? 'selected' : ''}`}
                 onClick={() => setDifficulty(id)}
+                title={d.description}
               >
-                <strong>{d.label}</strong>
-                <span>{d.tagline}</span>
+                {d.label}
               </button>
             );
           })}
         </div>
-        <p className="setup-diff-desc">{cfg.description}</p>
       </section>
 
       <section className="setup-franchise">
         <div className="setup-selected">
-          <TeamLogo team={team} size={34} />
-          <div>
-            <div className="tag">Selected Team</div>
-            <h2>
+          <TeamLogo team={team} size={28} />
+          <div className="setup-selected-copy">
+            <strong>
               {team.city} {team.name}
-            </h2>
-            <p>
+            </strong>
+            <span>
               {team.conference} · {team.division}
-            </p>
+            </span>
           </div>
         </div>
         <div className="setup-conf" role="tablist" aria-label="Conference">
@@ -114,7 +118,7 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
                     className={`setup-team ${teamId === t.id ? 'selected' : ''}`}
                     onClick={() => setTeamId(t.id)}
                   >
-                    <TeamLogo team={t} size={26} />
+                    <TeamLogo team={t} size={22} />
                     <span>
                       <strong>{t.abbrev}</strong>
                       <small>

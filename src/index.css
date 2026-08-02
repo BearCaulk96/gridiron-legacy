@@ -2574,15 +2574,14 @@ table.data tr:hover td {
 /* —— Locked setup (difficulty + team) —— */
 .setup-root {
   box-sizing: border-box;
-  width: min(1180px, calc(100% - 1rem));
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
+  width: min(1180px, calc(100% - 0.75rem));
+  height: 100%;
+  max-height: 100%;
   margin: 0 auto;
-  padding: 0.5rem 0.15rem 0.55rem;
+  padding: 0.45rem 0.1rem 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
   overflow: hidden;
 }
 
@@ -2590,7 +2589,7 @@ table.data tr:hover td {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -2598,83 +2597,78 @@ table.data tr:hover td {
   min-width: 0;
 }
 
+.setup-top-copy .tag {
+  margin: 0;
+}
+
 .setup-title {
-  font-size: clamp(1.35rem, 2.6vw, 2rem) !important;
+  font-size: clamp(1.2rem, 2.4vw, 1.75rem) !important;
   margin: 0.05rem 0 0 !important;
   line-height: 0.95 !important;
 }
 
 .setup-top-actions {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
   flex-shrink: 0;
 }
 
 .setup-diff {
   flex-shrink: 0;
-  padding: 0.4rem 0.5rem;
+  padding: 0.3rem 0.4rem;
   background: var(--panel);
   border: 1px solid var(--line);
+}
+
+.setup-diff-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.setup-diff-hint {
+  font-size: 0.65rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setup-diff-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.3rem;
+  gap: 0.25rem;
 }
 
 .setup-diff-card {
-  text-align: left;
-  padding: 0.35rem 0.45rem;
+  text-align: center;
+  padding: 0.4rem 0.25rem;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.22);
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-height: 0;
-}
-
-.setup-diff-card strong {
   font-family: var(--font-display);
   letter-spacing: 0.05em;
-  font-size: 0.95rem;
-}
-
-.setup-diff-card span {
-  font-size: 0.62rem;
-  color: var(--chalk-dim);
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: clamp(0.85rem, 2.2vw, 1.05rem);
+  line-height: 1;
+  min-height: 2.1rem;
 }
 
 .setup-diff-card.selected,
 .setup-diff-card:hover {
   border-color: var(--amber);
-}
-
-.setup-diff-desc {
-  margin: 0.3rem 0 0;
-  font-size: 0.68rem;
-  color: var(--chalk-dim);
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  background: rgba(240, 162, 2, 0.14);
 }
 
 .setup-franchise {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
   flex-shrink: 0;
-  padding: 0.35rem 0.5rem;
+  padding: 0.3rem 0.4rem;
   background: var(--panel);
   border: 1px solid var(--line);
 }
@@ -2682,32 +2676,45 @@ table.data tr:hover td {
 .setup-selected {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.setup-selected-copy {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-.setup-selected h2 {
-  margin: 0;
+.setup-selected-copy strong {
   font-family: var(--font-display);
   letter-spacing: 0.04em;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.setup-selected p {
-  margin: 0.1rem 0 0;
-  font-size: 0.68rem;
+.setup-selected-copy span {
+  margin-top: 0.1rem;
+  font-size: 0.62rem;
   color: var(--chalk-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setup-conf {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }
 
-/* Team picker fills remaining viewport and scrolls */
+/* Team picker always gets remaining viewport height and scrolls */
 .setup-teams {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
@@ -2715,35 +2722,34 @@ table.data tr:hover td {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-content: start;
-  gap: 0.4rem;
-  padding-right: 0.15rem;
+  gap: 0.35rem;
+  padding: 0.05rem 0.1rem 0.2rem 0;
 }
 
 .setup-div {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.35rem;
+  gap: 0.2rem;
+  padding: 0.3rem;
   background: var(--panel);
   border: 1px solid var(--line);
-  min-height: min-content;
 }
 
 .setup-team-grid {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 
 .setup-team {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.4rem;
+  gap: 0.3rem;
+  padding: 0.3rem 0.35rem;
   border: 1px solid var(--line);
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.02);
   text-align: left;
-  min-height: 2.5rem;
+  min-height: 2.25rem;
 }
 
 .setup-team span {
@@ -2755,12 +2761,12 @@ table.data tr:hover td {
 .setup-team strong {
   font-family: var(--font-display);
   letter-spacing: 0.04em;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1;
 }
 
 .setup-team small {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   color: var(--chalk-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -2773,14 +2779,6 @@ table.data tr:hover td {
 }
 
 @media (max-width: 900px) {
-  .setup-diff-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .setup-diff-card span {
-    display: none;
-  }
-
   .setup-teams {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2788,11 +2786,11 @@ table.data tr:hover td {
 
 @media (max-width: 640px) {
   .setup-top {
-    align-items: flex-start;
+    align-items: center;
   }
 
-  .setup-diff-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .setup-franchise {
+    flex-wrap: wrap;
   }
 
   .setup-teams {
@@ -2801,22 +2799,31 @@ table.data tr:hover td {
 }
 
 @media (max-width: 420px) {
+  .setup-diff-hint {
+    display: none;
+  }
+
   .setup-teams {
     grid-template-columns: 1fr;
   }
+
+  .setup-conf .btn {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
 }
 
-@media (max-height: 700px) {
-  .setup-diff-desc {
+@media (max-height: 640px) {
+  .setup-diff-hint {
     display: none;
   }
 
-  .setup-diff-card span {
+  .setup-selected-copy span {
     display: none;
   }
 
-  .setup-selected .tag {
-    display: none;
+  .setup-title {
+    font-size: 1.15rem !important;
   }
 }
 
