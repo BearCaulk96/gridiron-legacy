@@ -15,12 +15,17 @@ export type Position =
 
 export type Phase =
   | 'setup'
+  | 'freeAgency'
+  | 'scouting'
+  | 'draft'
+  | 'gm'
+  | 'coaching'
+  | 'trainingCamp'
   | 'preseason'
   | 'regular'
   | 'playoffs'
-  | 'offseason'
-  | 'draft'
-  | 'freeAgency';
+  | 'awards'
+  | 'offseason';
 
 export type Conference = 'American' | 'National';
 export type Division = 'North' | 'South' | 'East' | 'West';
@@ -117,6 +122,8 @@ export interface GameResult {
   homeScore: number;
   awayScore: number;
   played: boolean;
+  /** Preseason exhibition (does not count in standings). */
+  preseason?: boolean;
   playoff?: boolean;
 }
 
@@ -152,8 +159,13 @@ export interface DifficultyConfig {
 }
 
 export interface LeagueState {
-  version: 1;
+  /** v2 introduces the April–March calendar year. */
+  version: 2;
+  /** League year label (April of this year through March of year+1). */
   season: number;
+  /** Index into the 48-week calendar (0 = April Week 1). */
+  calendarIndex: number;
+  /** Active season-game week when on a game slot; otherwise 0. */
   week: number;
   phase: Phase;
   difficulty: Difficulty;
@@ -166,4 +178,6 @@ export interface LeagueState {
   scoutingPoints: number;
   salaryCap: number;
   createdAt: string;
+  /** Gridiron Cup / Super Bowl champion team id for the season, if decided. */
+  championId?: string | null;
 }

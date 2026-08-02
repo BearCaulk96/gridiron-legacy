@@ -10,6 +10,7 @@ import {
   totalYards,
   type LiveGameState,
 } from '../game/playByPlay';
+import { currentCalendar, formatCalendarLabel } from '../game/calendar';
 import { userGameThisWeek } from '../game/season';
 import { TeamLogo } from './TeamLogo';
 
@@ -258,7 +259,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
             {away.abbrev} @ {home.abbrev}
           </span>
           <small>
-            Week {state.week} · {home.city}
+            {formatCalendarLabel(currentCalendar(state), state.season)} · {home.city}
           </small>
         </div>
         <span className="gameday-scheme">

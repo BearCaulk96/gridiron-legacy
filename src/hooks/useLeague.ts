@@ -2,11 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Difficulty, LeagueState, TradeOffer } from '../game/types';
 import { clearSave, hasSave as checkSave, loadGame, saveGame } from '../game/save';
 import {
-  advanceWeek,
-  aiSignFreeAgents,
-  beginSeason,
+  advanceCalendar,
   completeLiveGameWeek,
-  completeOffseasonToNextSeason,
   enterDraft,
   releasePlayer,
   signFreeAgent,
@@ -41,7 +38,6 @@ export function useLeague() {
   const [screen, setScreen] = useState<Screen>('landing');
   const [toast, setToast] = useState<string | null>(null);
 
-  // Always open on the title screen; Load Dynasty continues a save.
   useEffect(() => {
     const saved = loadGame();
     if (saved) setState(saved);
@@ -78,8 +74,10 @@ export function useLeague() {
   }, []);
 
   const actions = {
-    beginSeason: () => setState((prev) => (prev ? cloneUpdate(prev, beginSeason) : prev)),
-    advanceWeek: () => setState((prev) => (prev ? cloneUpdate(prev, advanceWeek) : prev)),
+    advanceCalendar: () => {
+      setState((prev) => (prev ? cloneUpdate(prev, advanceCalendar) : prev));
+      setScreen('hub');
+    },
     completeLiveGame: (live: LiveGameState) => {
       setState((prev) => (prev ? cloneUpdate(prev, (s) => completeLiveGameWeek(s, live)) : prev));
       setScreen('hub');
@@ -100,15 +98,11 @@ export function useLeague() {
           flash('Cannot draft that player now.');
           return prev;
         }
-        if (next.phase === 'freeAgency') {
-          queueMicrotask(() => setScreen('freeAgency'));
-        }
         return next;
       });
     },
     simDraft: () => {
       setState((prev) => (prev ? cloneUpdate(prev, runFullAiDraft) : prev));
-      setScreen('freeAgency');
     },
     scout: (playerId: string) => {
       setState((prev) => {
@@ -162,15 +156,8 @@ export function useLeague() {
         });
       });
     },
-    finishFreeAgency: () => {
-      setState((prev) =>
-        prev
-          ? cloneUpdate(prev, (s) => {
-              aiSignFreeAgents(s);
-              completeOffseasonToNextSeason(s);
-            })
-          : prev,
-      );
+    finishFreeAgencyWeek: () => {
+      setState((prev) => (prev ? cloneUpdate(prev, advanceCalendar) : prev));
       setScreen('hub');
     },
   };

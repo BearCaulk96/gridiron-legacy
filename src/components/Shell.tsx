@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { LeagueState } from '../game/types';
 import type { Screen } from '../hooks/useLeague';
+import { currentCalendar, formatCalendarLabel } from '../game/calendar';
 import { DIFFICULTIES } from '../game/difficulty';
 import { formatMoney, teamCapHit, teamCapSpace } from '../game/salary';
 import { userTeam } from '../game/season';
@@ -28,6 +29,7 @@ const LINKS: { id: Screen; label: string }[] = [
 export function Shell({ state, screen, setScreen, onAbandon, children }: Props) {
   const team = userTeam(state);
   const cfg = DIFFICULTIES[state.difficulty];
+  const cal = currentCalendar(state);
 
   return (
     <div className="app-shell">
@@ -39,8 +41,8 @@ export function Shell({ state, screen, setScreen, onAbandon, children }: Props) 
           <div className="muted" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <TeamLogo team={team} size={22} />
             <span>
-              {team.city} {team.name} · {cfg.label} · {state.season}
-              {state.phase === 'regular' ? ` · Week ${state.week}` : ` · ${state.phase}`}
+              {team.city} {team.name} · {cfg.label} · {formatCalendarLabel(cal, state.season)} ·{' '}
+              {cal.shortTitle}
               {' · '}
               Cap space {formatMoney(teamCapSpace(state, team.id))}
             </span>

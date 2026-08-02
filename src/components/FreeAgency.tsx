@@ -23,11 +23,9 @@ export function FreeAgency({ state, onSign, onFinish }: Props) {
             No boosts for sale — only scouting, cap room, and judgment.
           </p>
         </div>
-        {(state.phase === 'freeAgency' || state.phase === 'preseason' || state.phase === 'offseason') && (
-          <button className="btn btn-primary" onClick={onFinish} disabled={state.phase !== 'freeAgency'}>
-            {state.phase === 'freeAgency' ? 'Close FA & Start Camp' : 'Available after draft'}
-          </button>
-        )}
+        <button className="btn btn-primary" onClick={onFinish} disabled={state.phase !== 'freeAgency'}>
+          {state.phase === 'freeAgency' ? 'Continue Calendar Week' : 'Free agency closed this week'}
+        </button>
       </div>
 
       <div className="list-scroll" style={{ marginTop: '1rem' }}>

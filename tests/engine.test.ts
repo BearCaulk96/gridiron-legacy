@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createLeague } from '../src/game/generate.ts';
 import {
+  advanceCalendar,
   advanceWeek,
   beginSeason,
   completeLiveGameWeek,
@@ -9,6 +10,7 @@ import {
   startNewGame,
   userGameThisWeek,
 } from '../src/game/season.ts';
+import { CALENDAR_LENGTH, YEAR_CALENDAR, currentCalendar } from '../src/game/calendar.ts';
 import { createLiveGame, stepUntilFinal } from '../src/game/playByPlay.ts';
 import { currentDraftPick, draftPlayer, prospects } from '../src/game/draft.ts';
 import { evaluateTrade } from '../src/game/trade.ts';
@@ -21,24 +23,34 @@ describe('Gridiron Dynasty engine', () => {
     assert.equal(league.teams.length, 32);
     assert.equal(TEAM_TEMPLATES.length, 32);
     assert.ok(Object.keys(league.players).length > 500);
-    assert.equal(league.schedule.length, 17 * 16);
+    assert.equal(league.schedule.length, (3 + 18) * 16);
+    assert.equal(league.calendarIndex, 0);
+    assert.equal(league.phase, 'freeAgency');
     assert.ok(teamCapHit(league, 'kc') > 0);
+  });
+
+  it('defines a 48-week April–March calendar', () => {
+    assert.equal(CALENDAR_LENGTH, 48);
+    assert.equal(YEAR_CALENDAR.length, 48);
+    assert.equal(YEAR_CALENDAR[0]!.month, 'April');
+    assert.equal(YEAR_CALENDAR[0]!.title, 'Free Agency');
+    assert.equal(YEAR_CALENDAR[47]!.month, 'March');
+    assert.ok(YEAR_CALENDAR.some((s) => s.kind === 'regularSeason' && s.seasonWeek === 18));
+    assert.ok(YEAR_CALENDAR.some((s) => s.kind === 'superBowl'));
   });
 
   it('simulates a full regular season without crashing', () => {
     const league = startNewGame('phi', 'pro');
     beginSeason(league);
-    for (let i = 0; i < 17; i++) {
+    for (let i = 0; i < 18; i++) {
       advanceWeek(league);
     }
-    assert.equal(league.phase, 'offseason');
-    assert.ok(league.teams.every((t) => t.wins + t.losses + t.ties === 17));
+    assert.equal(currentCalendar(league).phase, 'playoffs');
+    assert.ok(league.teams.every((t) => t.wins + t.losses + t.ties === 18));
   });
 
   it('runs a user draft pick on casual with visible board', () => {
     const league = startNewGame('dal', 'casual');
-    league.phase = 'offseason';
-    // Force standings so draft order is defined
     league.teams.forEach((t, i) => {
       t.wins = i;
       t.losses = 16 - i;
@@ -48,7 +60,6 @@ describe('Gridiron Dynasty engine', () => {
     const pick = currentDraftPick(league);
     assert.ok(pick);
     if (pick!.teamId !== league.userTeamId) {
-      // autoPickUntilUser should have stopped on user
       assert.equal(pick!.teamId, league.userTeamId);
     }
     const board = prospects(league);
@@ -91,13 +102,24 @@ describe('Gridiron Dynasty engine', () => {
     const live = createLiveGame(league, matchup!);
     stepUntilFinal(league, live);
     assert.equal(live.phase, 'final');
-    assert.ok(live.homeScore + live.awayScore >= 0);
     completeLiveGameWeek(league, live);
-    assert.equal(league.week, 2);
+    assert.equal(currentCalendar(league).seasonWeek, 2);
     assert.ok(matchup!.played);
     assert.equal(
-      league.schedule.filter((g) => g.week === 1 && g.played).length,
+      league.schedule.filter((g) => !g.preseason && !g.playoff && g.week === 1 && g.played).length,
       16,
     );
+  });
+
+  it('advances calendar from April free agency into May scouting', () => {
+    const league = startNewGame('kc', 'rookie');
+    assert.equal(currentCalendar(league).kind, 'freeAgency');
+    advanceCalendar(league);
+    advanceCalendar(league);
+    advanceCalendar(league);
+    advanceCalendar(league);
+    assert.equal(currentCalendar(league).month, 'May');
+    assert.equal(currentCalendar(league).kind, 'scoutingReport');
+    assert.equal(league.phase, 'scouting');
   });
 });

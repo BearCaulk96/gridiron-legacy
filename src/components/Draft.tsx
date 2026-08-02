@@ -32,36 +32,33 @@ export function Draft({ state, onDraft, onScout, onSimRest }: Props) {
 
   const yourTurn = pick?.teamId === state.userTeamId;
 
-  if (state.phase !== 'draft' && state.phase !== 'freeAgency') {
+  if (state.phase !== 'draft' && state.phase !== 'scouting') {
     return (
       <section className="panel panel-pad">
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem' }}>DRAFT BOARD</h2>
-        <p className="muted">The draft opens in the offseason after the Gridiron Cup.</p>
+        <p className="muted">Scouting opens in May, with the draft on May Week 3.</p>
       </section>
     );
   }
 
-  if (state.phase === 'freeAgency') {
-    return (
-      <section className="panel panel-pad">
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem' }}>DRAFT COMPLETE</h2>
-        <p className="muted">Head to Free Agency to finish the offseason.</p>
-      </section>
-    );
-  }
+  const scoutingOnly = state.phase === 'scouting';
 
   return (
     <section className="panel panel-pad anim-fade-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
-          <div className="tag">Draft · {cfg.label}</div>
+          <div className="tag">{scoutingOnly ? 'Scouting' : 'Draft'} · {cfg.label}</div>
           <h2 style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em', fontSize: '2.4rem', margin: '0.2rem 0' }}>
-            {pick ? `PICK ${pick.overall} · R${pick.round}` : 'COMPLETE'}
+            {scoutingOnly
+              ? 'SCOUTING BOARD'
+              : pick
+                ? `PICK ${pick.overall} · R${pick.round}`
+                : 'COMPLETE'}
           </h2>
           <p className="muted" style={{ margin: 0 }}>
             {revealBoardHint(cfg)} · Scout points: {state.scoutingPoints}
           </p>
-          {pick && (
+          {!scoutingOnly && pick && (
             <p style={{ margin: '0.5rem 0 0' }}>
               On the clock:{' '}
               <strong>
@@ -71,11 +68,13 @@ export function Draft({ state, onDraft, onScout, onSimRest }: Props) {
             </p>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-          <button className="btn btn-ghost" onClick={onSimRest}>
-            Autopick My Remaining
-          </button>
-        </div>
+        {!scoutingOnly && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+            <button className="btn btn-ghost" onClick={onSimRest}>
+              Autopick My Remaining
+            </button>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', margin: '1rem 0' }}>
@@ -121,9 +120,11 @@ export function Draft({ state, onDraft, onScout, onSimRest }: Props) {
                     )}
                   </td>
                   <td>
-                    <button className="btn btn-primary btn-small" disabled={!yourTurn} onClick={() => onDraft(p.id)}>
-                      Draft
-                    </button>
+                    {!scoutingOnly && (
+                      <button className="btn btn-primary btn-small" disabled={!yourTurn} onClick={() => onDraft(p.id)}>
+                        Draft
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

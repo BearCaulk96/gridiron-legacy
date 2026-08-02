@@ -1119,6 +1119,61 @@ table.data tr:hover td {
   opacity: 0.8;
 }
 
+.office-cal-stamp {
+  margin-bottom: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--office-secondary) 45%, transparent);
+  background: rgba(0, 0, 0, 0.45);
+  text-align: left;
+}
+
+.office-cal-stamp small {
+  display: block;
+  color: var(--office-secondary);
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.office-cal-stamp strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.office-advance {
+  margin-top: 0.45rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--office-secondary) 50%, transparent);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--chalk);
+  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.office-advance:hover {
+  border-color: var(--office-secondary);
+}
+
+.office-sched-event {
+  justify-content: center;
+  min-height: 52px;
+}
+
+.office-sched-event strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.office-sched-event span {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
 .office-news {
   position: absolute;
   left: 0;

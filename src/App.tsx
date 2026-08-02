@@ -55,9 +55,8 @@ export default function App() {
       <>
         <HeadOffice
           state={state}
-          onBeginSeason={actions.beginSeason}
           onPlayGame={() => game.setScreen('gameday')}
-          onEnterDraft={actions.enterDraft}
+          onAdvanceCalendar={actions.advanceCalendar}
           onOpen={game.setScreen}
           onTitle={game.goTitle}
         />
@@ -94,7 +93,7 @@ export default function App() {
         )}
         {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}
         {game.screen === 'freeAgency' && (
-          <FreeAgency state={state} onSign={actions.signFA} onFinish={actions.finishFreeAgency} />
+          <FreeAgency state={state} onSign={actions.signFA} onFinish={actions.finishFreeAgencyWeek} />
         )}
         {game.screen === 'standings' && <Standings state={state} />}
         {game.screen === 'cap' && <Cap state={state} />}

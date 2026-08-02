@@ -1,17 +1,23 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { GameResult, LeagueState, Team } from '../game/types';
+import {
+  CALENDAR_LENGTH,
+  calendarCardLabel,
+  calendarSlot,
+  currentCalendar,
+  formatCalendarLabel,
+} from '../game/calendar';
 import { getOfficeTheme } from '../game/officeThemes';
 import { teamPower } from '../game/ratings';
 import { formatMoney, rosterPlayers, teamCapSpace } from '../game/salary';
-import { standings, userTeam } from '../game/season';
+import { standings, userGameThisWeek, userTeam } from '../game/season';
 import { TeamLogo } from './TeamLogo';
 import type { Screen } from '../hooks/useLeague';
 
 interface Props {
   state: LeagueState;
-  onBeginSeason: () => void;
   onPlayGame: () => void;
-  onEnterDraft: () => void;
+  onAdvanceCalendar: () => void;
   onOpen: (screen: Screen) => void;
   onTitle: () => void;
 }
@@ -125,9 +131,8 @@ function ProceduralOffice({
 
 export function HeadOffice({
   state,
-  onBeginSeason,
   onPlayGame,
-  onEnterDraft,
+  onAdvanceCalendar,
   onOpen,
   onTitle,
 }: Props) {
@@ -139,6 +144,8 @@ export function HeadOffice({
     rosterPlayers(state, team.id).reduce((s, p) => s + p.morale, 0) /
       Math.max(1, rosterPlayers(state, team.id).length),
   );
+  const cal = currentCalendar(state);
+  const userGame = userGameThisWeek(state);
 
   const ranked = standings(state);
   const confTeams = ranked.filter((t) => t.conference === team.conference);
@@ -146,36 +153,32 @@ export function HeadOffice({
   const confRank = confTeams.findIndex((t) => t.id === team.id) + 1;
   const divRank = divTeams.findIndex((t) => t.id === team.id) + 1;
 
-  const myGames = useMemo(
-    () =>
-      state.schedule
-        .filter((g) => g.homeId === team.id || g.awayId === team.id)
-        .sort((a, b) => a.week - b.week),
-    [state.schedule, team.id],
-  );
-
-  const focusWeek =
-    state.phase === 'regular'
-      ? state.week
-      : state.phase === 'preseason'
-        ? 1
-        : myGames.find((g) => !g.played)?.week ?? 17;
-
-  const focusIdx = Math.max(
-    0,
-    myGames.findIndex((g) => g.week === focusWeek),
-  );
-  const [centerIdx, setCenterIdx] = useState(focusIdx);
+  const [centerIdx, setCenterIdx] = useState(state.calendarIndex);
   useEffect(() => {
-    setCenterIdx(focusIdx);
-  }, [focusIdx, team.id, state.season]);
+    setCenterIdx(state.calendarIndex);
+  }, [state.calendarIndex, team.id, state.season]);
 
   const slots = [-1, 0, 1].map((delta) => {
     const idx = centerIdx + delta;
-    return idx >= 0 && idx < myGames.length ? myGames[idx]! : null;
+    if (idx < 0 || idx >= CALENDAR_LENGTH) return null;
+    return calendarSlot(idx);
   });
 
-  const currentGame = slots[1];
+  const matchupForSlot = (index: number): GameResult | null => {
+    const slot = calendarSlot(index);
+    if (slot.seasonWeek == null || slot.playAction !== 'gameday') return null;
+    return (
+      state.schedule.find(
+        (g) =>
+          g.week === slot.seasonWeek &&
+          !!g.preseason === !!slot.preseason &&
+          !!g.playoff === !!slot.playoff &&
+          (g.homeId === team.id || g.awayId === team.id),
+      ) ?? null
+    );
+  };
+
+  const currentGame = userGame ?? matchupForSlot(state.calendarIndex);
   const oppTeam = currentGame
     ? state.teams.find((t) => t.id === opponentOf(currentGame, team.id))
     : null;
@@ -187,23 +190,41 @@ export function HeadOffice({
   const artUrl = theme.hasArt ? `${import.meta.env.BASE_URL}offices/${team.id}.jpg` : null;
 
   const play = () => {
-    if (state.phase === 'preseason') onBeginSeason();
-    else if (state.phase === 'regular') onPlayGame();
-    else if (state.phase === 'offseason') onEnterDraft();
-    else if (state.phase === 'draft') onOpen('draft');
-    else if (state.phase === 'freeAgency') onOpen('freeAgency');
-    else onOpen('standings');
+    const action = cal.playAction;
+    if (action === 'gameday') {
+      if (userGame) onPlayGame();
+      else onAdvanceCalendar();
+      return;
+    }
+    if (action === 'freeAgency') {
+      onOpen('freeAgency');
+      return;
+    }
+    if (action === 'draft') {
+      onOpen('draft');
+      return;
+    }
+    if (action === 'roster') {
+      onOpen('roster');
+      return;
+    }
+    if (action === 'coaches') {
+      onOpen('coaches');
+      return;
+    }
+    if (action === 'standings') {
+      onOpen('standings');
+      return;
+    }
+    onAdvanceCalendar();
   };
 
   const playLabel = (() => {
-    if (state.phase === 'preseason') return 'START SEASON';
-    if (state.phase === 'regular' && oppTeam) {
-      return `${vsLabel(currentGame!, team.id)} ${oppTeam.name.toUpperCase()}`;
+    if (cal.playAction === 'gameday' && oppTeam && currentGame) {
+      return `${vsLabel(currentGame, team.id)} ${oppTeam.name.toUpperCase()}`;
     }
-    if (state.phase === 'offseason') return 'ENTER DRAFT';
-    if (state.phase === 'draft') return 'DRAFT BOARD';
-    if (state.phase === 'freeAgency') return 'FREE AGENCY';
-    return 'CONTINUE';
+    if (cal.playAction === 'gameday' && !userGame) return 'SIM SLATE';
+    return cal.playLabel;
   })();
 
   return (
@@ -233,38 +254,51 @@ export function HeadOffice({
         >
           ‹
         </button>
-        {slots.map((game, i) => {
-          const label = i === 0 ? 'PREVIOUS WEEK' : i === 1 ? 'CURRENT WEEK' : 'NEXT WEEK';
-          if (!game) {
+        {slots.map((slot, i) => {
+          const when = i === 0 ? 'PREVIOUS' : i === 1 ? 'CURRENT' : 'NEXT';
+          if (!slot) {
             return (
-              <div key={label} className={`office-sched-card ${i === 1 ? 'current empty' : 'empty'}`}>
-                <small>{label}</small>
+              <div key={when} className={`office-sched-card ${i === 1 ? 'current empty' : 'empty'}`}>
+                <small>{when}</small>
                 <strong>—</strong>
               </div>
             );
           }
-          const opp = state.teams.find((t) => t.id === opponentOf(game, team.id))!;
+          const game = matchupForSlot(slot.index);
+          const opp = game ? state.teams.find((t) => t.id === opponentOf(game, team.id)) : null;
           return (
-            <div key={game.id} className={`office-sched-card ${i === 1 ? 'current' : ''}`}>
+            <div
+              key={slot.index}
+              className={`office-sched-card ${slot.index === state.calendarIndex ? 'current' : ''}`}
+            >
               <small>
-                WEEK {game.week} · {label}
+                {calendarCardLabel(slot)} · {when}
               </small>
-              <div className="office-sched-match">
-                <TeamLogo team={team} size={28} />
-                <div>
-                  <strong>
-                    {vsLabel(game, team.id)} {opp.abbrev}
-                  </strong>
-                  <span>{game.played ? resultLabel(game, team.id) : opp.city}</span>
+              {game && opp ? (
+                <div className="office-sched-match">
+                  <TeamLogo team={team} size={28} />
+                  <div>
+                    <strong>
+                      {vsLabel(game, team.id)} {opp.abbrev}
+                    </strong>
+                    <span>{game.played ? resultLabel(game, team.id) : slot.shortTitle}</span>
+                  </div>
+                  <TeamLogo team={opp} size={28} />
                 </div>
-                <TeamLogo team={opp} size={28} />
-              </div>
+              ) : (
+                <div className="office-sched-match office-sched-event">
+                  <div>
+                    <strong>{slot.shortTitle}</strong>
+                    <span>{formatCalendarLabel(slot, state.season)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
         <button
           className="office-sched-arrow"
-          onClick={() => setCenterIdx((v) => Math.min(myGames.length - 1, v + 1))}
+          onClick={() => setCenterIdx((v) => Math.min(CALENDAR_LENGTH - 1, v + 1))}
           aria-label="Next week"
         >
           ›
@@ -343,6 +377,10 @@ export function HeadOffice({
           </ul>
         </div>
 
+        <div className="office-cal-stamp">
+          <small>{formatCalendarLabel(cal, state.season)}</small>
+          <strong>{cal.title}</strong>
+        </div>
         <button className="office-play" onClick={play}>
           <IconFootball />
           <span>
@@ -350,6 +388,14 @@ export function HeadOffice({
             <small>{playLabel}</small>
           </span>
         </button>
+        {(cal.playAction === 'freeAgency' ||
+          cal.playAction === 'draft' ||
+          cal.playAction === 'roster' ||
+          cal.playAction === 'coaches') && (
+          <button className="office-advance" onClick={onAdvanceCalendar}>
+            Continue Week →
+          </button>
+        )}
       </aside>
 
       <footer className="office-news">

@@ -170,8 +170,8 @@ export function autoPickUntilUser(state: LeagueState): void {
   while (true) {
     const pick = currentDraftPick(state);
     if (!pick) {
-      state.phase = 'freeAgency';
-      state.messages.unshift('The draft is complete. Free agency is open.');
+      state.phase = 'draft';
+      state.messages.unshift('The draft is complete. Continue to Draft Recap.');
       return;
     }
     if (pick.teamId === state.userTeamId) return;
@@ -194,7 +194,8 @@ export function runFullAiDraft(state: LeagueState): void {
       draftPlayer(state, choice.id, pick.teamId);
     }
   }
-  state.phase = 'freeAgency';
+  state.phase = 'draft';
+  state.messages.unshift('The draft is complete. Continue to Draft Recap.');
 }
 
 function hash(s: string): number {

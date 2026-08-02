@@ -212,10 +212,11 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
   });
 
   const state: LeagueState = {
-    version: 1,
+    version: 2,
     season: 2026,
+    calendarIndex: 0,
     week: 0,
-    phase: 'preseason',
+    phase: 'freeAgency',
     difficulty,
     userTeamId,
     teams,
@@ -225,11 +226,13 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
     messages: [
       `Welcome to Gridiron Dynasty. You take the helm of the ${teams.find((t) => t.id === userTeamId)?.city} ${teams.find((t) => t.id === userTeamId)?.name}.`,
       `Difficulty: ${cfg.label}. ${cfg.tagline}`,
+      'The calendar opens in April — Free Agency Week 1.',
       'No microtransactions. No pay-to-win. Pure football decisions.',
     ],
     scoutingPoints: difficulty === 'veteran' ? 6 : difficulty === 'pro' ? 10 : 18,
     salaryCap: BASE_SALARY_CAP,
     createdAt: new Date().toISOString(),
+    championId: null,
   };
 
   state.schedule = buildSchedule(state, rng);
@@ -262,12 +265,30 @@ export function generateDraftClass(rng: () => number, _season: number): Player[]
   return prospects;
 }
 
-/** 17-week round-robin-ish schedule: each team plays 17 games. */
+/** Preseason (3) + 18-week regular season. Playoff games are added during the calendar. */
 export function buildSchedule(state: LeagueState, rng: () => number): import('./types').GameResult[] {
   const games: import('./types').GameResult[] = [];
   const teamIds = state.teams.map((t) => t.id);
 
-  for (let week = 1; week <= 17; week++) {
+  for (let week = 1; week <= 3; week++) {
+    const pool = shuffle(rng, teamIds);
+    for (let i = 0; i < pool.length; i += 2) {
+      const home = pool[i]!;
+      const away = pool[i + 1]!;
+      games.push({
+        id: `ps_${state.season}_${week}_${home}_${away}`,
+        week,
+        homeId: home,
+        awayId: away,
+        homeScore: 0,
+        awayScore: 0,
+        played: false,
+        preseason: true,
+      });
+    }
+  }
+
+  for (let week = 1; week <= 18; week++) {
     const pool = shuffle(rng, teamIds);
     for (let i = 0; i < pool.length; i += 2) {
       const home = pool[i]!;
