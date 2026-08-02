@@ -189,42 +189,33 @@ export function HeadOffice({
   );
   const artUrl = theme.hasArt ? `${import.meta.env.BASE_URL}offices/${team.id}.jpg` : null;
 
-  const play = () => {
-    const action = cal.playAction;
-    if (action === 'gameday') {
-      if (userGame) onPlayGame();
-      else onAdvanceCalendar();
+  const primaryMode: 'play' | 'draft' | 'advance' = userGame
+    ? 'play'
+    : cal.kind === 'draft'
+      ? 'draft'
+      : 'advance';
+
+  const runPrimary = () => {
+    if (primaryMode === 'play') {
+      onPlayGame();
       return;
     }
-    if (action === 'freeAgency') {
-      onOpen('freeAgency');
-      return;
-    }
-    if (action === 'draft') {
+    if (primaryMode === 'draft') {
       onOpen('draft');
-      return;
-    }
-    if (action === 'roster') {
-      onOpen('roster');
-      return;
-    }
-    if (action === 'coaches') {
-      onOpen('coaches');
-      return;
-    }
-    if (action === 'standings') {
-      onOpen('standings');
       return;
     }
     onAdvanceCalendar();
   };
 
-  const playLabel = (() => {
-    if (cal.playAction === 'gameday' && oppTeam && currentGame) {
+  const primaryLabel =
+    primaryMode === 'play' ? 'Play Now' : primaryMode === 'draft' ? 'Draft Night' : 'Advance Week';
+
+  const primaryDetail = (() => {
+    if (primaryMode === 'play' && oppTeam && currentGame) {
       return `${vsLabel(currentGame, team.id)} ${oppTeam.name.toUpperCase()}`;
     }
-    if (cal.playAction === 'gameday' && !userGame) return 'SIM SLATE';
-    return cal.playLabel;
+    if (primaryMode === 'draft') return 'ENTER THE DRAFT';
+    return cal.shortTitle.toUpperCase();
   })();
 
   return (
@@ -377,20 +368,11 @@ export function HeadOffice({
             <small>{formatCalendarLabel(cal, state.season)}</small>
             <strong>{cal.title}</strong>
           </div>
-          {(cal.playAction === 'freeAgency' ||
-            cal.playAction === 'draft' ||
-            cal.playAction === 'roster' ||
-            cal.playAction === 'coaches' ||
-            cal.playAction === 'resolve') && (
-            <button className="office-advance" onClick={onAdvanceCalendar}>
-              Continue Week →
-            </button>
-          )}
-          <button className="office-play" onClick={play}>
+          <button className={`office-play office-play-${primaryMode}`} onClick={runPrimary}>
             <IconFootball />
             <span>
-              <strong>PLAY NOW</strong>
-              <small>{playLabel}</small>
+              <strong>{primaryLabel}</strong>
+              <small>{primaryDetail}</small>
             </span>
           </button>
         </div>

@@ -1237,25 +1237,6 @@ table.data tr:hover td {
   line-height: 1.1;
 }
 
-.office-advance {
-  margin: 0;
-  width: 100%;
-  padding: 0.45rem 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--office-secondary) 65%, #fff);
-  background: color-mix(in srgb, var(--office-primary) 55%, rgba(0, 0, 0, 0.65));
-  color: var(--chalk);
-  letter-spacing: 0.06em;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 4;
-}
-
-.office-advance:hover {
-  border-color: var(--office-secondary);
-}
-
 .office-sched-event {
   justify-content: center;
   min-height: 52px;
