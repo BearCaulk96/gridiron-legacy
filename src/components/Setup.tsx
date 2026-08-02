@@ -22,17 +22,20 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
   const cfg = DIFFICULTIES[difficulty];
   const team = TEAM_TEMPLATES.find((t) => t.id === teamId)!;
 
-  const grouped = useMemo(() => {
-    return DIVISIONS.map((division) => ({
-      division,
-      teams: TEAM_TEMPLATES.filter((t) => t.conference === conference && t.division === division),
-    }));
-  }, [conference]);
+  const teams = useMemo(
+    () =>
+      TEAM_TEMPLATES.filter((t) => t.conference === conference).sort((a, b) => {
+        const di = DIVISIONS.indexOf(a.division as (typeof DIVISIONS)[number]);
+        const dj = DIVISIONS.indexOf(b.division as (typeof DIVISIONS)[number]);
+        return di - dj || a.city.localeCompare(b.city);
+      }),
+    [conference],
+  );
 
   return (
     <div className="setup-root">
       <header className="setup-top">
-        <div>
+        <div className="setup-top-copy">
           <div className="tag">New Franchise</div>
           <h1 className="brand-mark setup-title">CHOOSE YOUR PATH</h1>
         </div>
@@ -46,7 +49,7 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
         </div>
       </header>
 
-      <section className="setup-diff">
+      <section className="setup-diff" aria-label="Difficulty">
         <div className="setup-diff-grid">
           {(Object.keys(DIFFICULTIES) as Difficulty[]).map((id) => {
             const d = DIFFICULTIES[id];
@@ -68,9 +71,9 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
 
       <section className="setup-franchise">
         <div className="setup-selected">
-          <TeamLogo team={team} size={40} />
+          <TeamLogo team={team} size={34} />
           <div>
-            <div className="tag">Franchise</div>
+            <div className="tag">Selected Team</div>
             <h2>
               {team.city} {team.name}
             </h2>
@@ -79,11 +82,13 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
             </p>
           </div>
         </div>
-        <div className="setup-conf">
+        <div className="setup-conf" role="tablist" aria-label="Conference">
           {CONFERENCES.map((c) => (
             <button
               key={c}
               type="button"
+              role="tab"
+              aria-selected={conference === c}
               className={`btn btn-small ${conference === c ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setConference(c)}
             >
@@ -93,30 +98,35 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
         </div>
       </section>
 
-      <div className="setup-teams">
-        {grouped.map(({ division, teams }) => (
-          <div key={division} className="setup-div">
-            <div className="tag">{division}</div>
-            <div className="setup-team-grid">
-              {teams.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`setup-team ${teamId === t.id ? 'selected' : ''}`}
-                  onClick={() => setTeamId(t.id)}
-                >
-                  <TeamLogo team={t} size={28} />
-                  <span>
-                    <strong>{t.abbrev}</strong>
-                    <small>
-                      {t.city} {t.name}
-                    </small>
-                  </span>
-                </button>
-              ))}
+      <div className="setup-teams" aria-label="Choose team">
+        {DIVISIONS.map((division) => {
+          const divTeams = teams.filter((t) => t.division === division);
+          return (
+            <div key={division} className="setup-div">
+              <div className="tag">
+                {conference} · {division}
+              </div>
+              <div className="setup-team-grid">
+                {divTeams.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`setup-team ${teamId === t.id ? 'selected' : ''}`}
+                    onClick={() => setTeamId(t.id)}
+                  >
+                    <TeamLogo team={t} size={26} />
+                    <span>
+                      <strong>{t.abbrev}</strong>
+                      <small>
+                        {t.city} {t.name}
+                      </small>
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
