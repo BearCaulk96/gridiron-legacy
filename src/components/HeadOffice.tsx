@@ -10,7 +10,7 @@ import type { Screen } from '../hooks/useLeague';
 interface Props {
   state: LeagueState;
   onBeginSeason: () => void;
-  onAdvanceWeek: () => void;
+  onPlayGame: () => void;
   onEnterDraft: () => void;
   onOpen: (screen: Screen) => void;
   onTitle: () => void;
@@ -126,7 +126,7 @@ function ProceduralOffice({
 export function HeadOffice({
   state,
   onBeginSeason,
-  onAdvanceWeek,
+  onPlayGame,
   onEnterDraft,
   onOpen,
   onTitle,
@@ -188,7 +188,7 @@ export function HeadOffice({
 
   const play = () => {
     if (state.phase === 'preseason') onBeginSeason();
-    else if (state.phase === 'regular') onAdvanceWeek();
+    else if (state.phase === 'regular') onPlayGame();
     else if (state.phase === 'offseason') onEnterDraft();
     else if (state.phase === 'draft') onOpen('draft');
     else if (state.phase === 'freeAgency') onOpen('freeAgency');

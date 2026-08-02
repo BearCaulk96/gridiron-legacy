@@ -5,6 +5,7 @@ import {
   advanceWeek,
   aiSignFreeAgents,
   beginSeason,
+  completeLiveGameWeek,
   completeOffseasonToNextSeason,
   enterDraft,
   releasePlayer,
@@ -13,11 +14,13 @@ import {
 } from '../game/season';
 import { autoPickUntilUser, draftPlayer, runFullAiDraft, scoutPlayer } from '../game/draft';
 import { canUserAffordIncoming, evaluateTrade, executeTrade } from '../game/trade';
+import type { LiveGameState } from '../game/playByPlay';
 
 export type Screen =
   | 'landing'
   | 'setup'
   | 'hub'
+  | 'gameday'
   | 'roster'
   | 'coaches'
   | 'draft'
@@ -77,6 +80,10 @@ export function useLeague() {
   const actions = {
     beginSeason: () => setState((prev) => (prev ? cloneUpdate(prev, beginSeason) : prev)),
     advanceWeek: () => setState((prev) => (prev ? cloneUpdate(prev, advanceWeek) : prev)),
+    completeLiveGame: (live: LiveGameState) => {
+      setState((prev) => (prev ? cloneUpdate(prev, (s) => completeLiveGameWeek(s, live)) : prev));
+      setScreen('hub');
+    },
     enterDraft: () => {
       setState((prev) => (prev ? cloneUpdate(prev, enterDraft) : prev));
       setScreen('draft');

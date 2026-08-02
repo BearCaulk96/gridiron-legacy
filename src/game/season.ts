@@ -11,8 +11,9 @@ import {
   teamCapHit,
   teamCapSpace,
 } from './salary';
-import { describeGame, simulateWeek } from './simulation';
+import { applyCompletedGame, describeGame, simulateGame, simulateWeek } from './simulation';
 import type { Difficulty, LeagueState, Team } from './types';
+import type { LiveGameState } from './playByPlay';
 
 export function startNewGame(userTeamId: string, difficulty: Difficulty): LeagueState {
   return createLeague(userTeamId, difficulty);
@@ -39,6 +40,42 @@ export function advanceWeek(state: LeagueState): void {
   } else {
     state.week += 1;
   }
+}
+
+/** Commit a watched live game, sim remaining week games, then advance the calendar. */
+export function completeLiveGameWeek(state: LeagueState, live: LiveGameState): void {
+  if (state.phase !== 'regular') return;
+  const game = state.schedule.find((g) => g.id === live.gameId);
+  if (!game) return;
+
+  applyCompletedGame(state, game, live.homeScore, live.awayScore);
+  state.messages.unshift(`Week ${state.week}: ${describeGame(state, game)}`);
+
+  for (const g of state.schedule.filter((x) => x.week === state.week && !x.played)) {
+    simulateGame(state, g);
+  }
+
+  for (const p of Object.values(state.players)) {
+    if (p.injuryWeeks > 0) p.injuryWeeks -= 1;
+  }
+
+  if (state.week >= 17) {
+    finishRegularSeason(state);
+  } else {
+    state.week += 1;
+  }
+}
+
+export function userGameThisWeek(state: LeagueState) {
+  if (state.phase !== 'regular') return null;
+  return (
+    state.schedule.find(
+      (g) =>
+        g.week === state.week &&
+        !g.played &&
+        (g.homeId === state.userTeamId || g.awayId === state.userTeamId),
+    ) ?? null
+  );
 }
 
 function standingsSort(a: Team, b: Team): number {

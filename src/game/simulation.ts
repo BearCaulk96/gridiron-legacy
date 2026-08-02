@@ -153,3 +153,46 @@ export function describeGame(state: LeagueState, game: GameResult): string {
   if (!game.played) return `${away.abbrev} @ ${home.abbrev}`;
   return `${away.abbrev} ${game.awayScore} — ${home.abbrev} ${game.homeScore}`;
 }
+
+/** Apply a completed live/watchable game to league standings and player stats. */
+export function applyCompletedGame(
+  state: LeagueState,
+  game: GameResult,
+  homeScore: number,
+  awayScore: number,
+): void {
+  if (game.played) return;
+  const rng = createRng(hashString(game.id + ':finalize'));
+  game.homeScore = homeScore;
+  game.awayScore = awayScore;
+  game.played = true;
+
+  const home = state.teams.find((t) => t.id === game.homeId)!;
+  const away = state.teams.find((t) => t.id === game.awayId)!;
+  home.pointsFor += homeScore;
+  home.pointsAgainst += awayScore;
+  away.pointsFor += awayScore;
+  away.pointsAgainst += homeScore;
+
+  if (homeScore > awayScore) {
+    home.wins += 1;
+    away.losses += 1;
+  } else if (awayScore > homeScore) {
+    away.wins += 1;
+    home.losses += 1;
+  } else {
+    home.ties += 1;
+    away.ties += 1;
+  }
+
+  awardStats(rosterPlayers(state, home.id), homeScore, awayScore, rng);
+  awardStats(rosterPlayers(state, away.id), awayScore, homeScore, rng);
+
+  const injuries = [
+    ...applyInjuries(state, home.id, rng).map((n) => `${home.abbrev}: ${n}`),
+    ...applyInjuries(state, away.id, rng).map((n) => `${away.abbrev}: ${n}`),
+  ];
+  if (injuries.length && (game.homeId === state.userTeamId || game.awayId === state.userTeamId)) {
+    state.messages.unshift(...injuries.slice(0, 3));
+  }
+}

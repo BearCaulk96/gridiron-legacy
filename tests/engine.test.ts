@@ -1,7 +1,15 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createLeague } from '../src/game/generate.ts';
-import { advanceWeek, beginSeason, enterDraft, startNewGame } from '../src/game/season.ts';
+import {
+  advanceWeek,
+  beginSeason,
+  completeLiveGameWeek,
+  enterDraft,
+  startNewGame,
+  userGameThisWeek,
+} from '../src/game/season.ts';
+import { createLiveGame, stepUntilFinal } from '../src/game/playByPlay.ts';
 import { currentDraftPick, draftPlayer, prospects } from '../src/game/draft.ts';
 import { evaluateTrade } from '../src/game/trade.ts';
 import { TEAM_TEMPLATES } from '../src/game/teams.ts';
@@ -73,5 +81,23 @@ describe('Gridiron Dynasty engine', () => {
     assert.ok(league.teams.some((t) => t.name === 'Stampede'));
     assert.ok(league.teams.some((t) => t.city === 'Richmond'));
     assert.ok(league.teams.every((t) => !!t.accent));
+  });
+
+  it('plays a live user game then completes the week', () => {
+    const league = startNewGame('pit', 'rookie');
+    beginSeason(league);
+    const matchup = userGameThisWeek(league);
+    assert.ok(matchup);
+    const live = createLiveGame(league, matchup!);
+    stepUntilFinal(league, live);
+    assert.equal(live.phase, 'final');
+    assert.ok(live.homeScore + live.awayScore >= 0);
+    completeLiveGameWeek(league, live);
+    assert.equal(league.week, 2);
+    assert.ok(matchup!.played);
+    assert.equal(
+      league.schedule.filter((g) => g.week === 1 && g.played).length,
+      16,
+    );
   });
 });

@@ -10,6 +10,7 @@ import { Trade } from './components/Trade';
 import { FreeAgency } from './components/FreeAgency';
 import { Standings } from './components/Standings';
 import { Cap } from './components/Cap';
+import { GameDay } from './components/GameDay';
 import { useLeague } from './hooks/useLeague';
 import { hasSave } from './game/save';
 
@@ -55,10 +56,23 @@ export default function App() {
         <HeadOffice
           state={state}
           onBeginSeason={actions.beginSeason}
-          onAdvanceWeek={actions.advanceWeek}
+          onPlayGame={() => game.setScreen('gameday')}
           onEnterDraft={actions.enterDraft}
           onOpen={game.setScreen}
           onTitle={game.goTitle}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  if (game.screen === 'gameday') {
+    return (
+      <>
+        <GameDay
+          state={state}
+          onFinish={actions.completeLiveGame}
+          onBack={() => game.setScreen('hub')}
         />
         {game.toast && <div className="toast">{game.toast}</div>}
       </>
