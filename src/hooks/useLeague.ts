@@ -70,6 +70,10 @@ export function useLeague() {
     setScreen('landing');
   }, []);
 
+  const goTitle = useCallback(() => {
+    setScreen('landing');
+  }, []);
+
   const actions = {
     beginSeason: () => setState((prev) => (prev ? cloneUpdate(prev, beginSeason) : prev)),
     advanceWeek: () => setState((prev) => (prev ? cloneUpdate(prev, advanceWeek) : prev)),
@@ -172,6 +176,7 @@ export function useLeague() {
     newGame,
     continueGame,
     abandon,
+    goTitle,
     actions,
     hasSave: checkSave(),
   };

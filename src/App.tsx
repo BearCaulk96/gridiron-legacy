@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { TitleScreen } from './components/TitleScreen';
 import { Setup } from './components/Setup';
 import { Shell } from './components/Shell';
-import { Hub } from './components/Hub';
+import { HeadOffice } from './components/HeadOffice';
 import { Roster } from './components/Roster';
 import { Coaches } from './components/Coaches';
 import { Draft } from './components/Draft';
@@ -48,18 +48,26 @@ export default function App() {
 
   const { state, actions } = game;
 
+  // Team-themed Head Office is the full-screen dynasty home.
+  if (game.screen === 'hub') {
+    return (
+      <>
+        <HeadOffice
+          state={state}
+          onBeginSeason={actions.beginSeason}
+          onAdvanceWeek={actions.advanceWeek}
+          onEnterDraft={actions.enterDraft}
+          onOpen={game.setScreen}
+          onTitle={game.goTitle}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
   return (
     <>
       <Shell state={state} screen={game.screen} setScreen={game.setScreen} onAbandon={game.abandon}>
-        {game.screen === 'hub' && (
-          <Hub
-            state={state}
-            onBeginSeason={actions.beginSeason}
-            onAdvanceWeek={actions.advanceWeek}
-            onEnterDraft={actions.enterDraft}
-            onOpen={game.setScreen}
-          />
-        )}
         {game.screen === 'roster' && <Roster state={state} onRelease={actions.release} />}
         {game.screen === 'coaches' && <Coaches state={state} />}
         {game.screen === 'draft' && (

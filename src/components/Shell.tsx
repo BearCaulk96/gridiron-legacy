@@ -15,7 +15,7 @@ interface Props {
 }
 
 const LINKS: { id: Screen; label: string }[] = [
-  { id: 'hub', label: 'Hub' },
+  { id: 'hub', label: 'Office' },
   { id: 'roster', label: 'Roster' },
   { id: 'coaches', label: 'Coaches' },
   { id: 'trade', label: 'Trade' },
