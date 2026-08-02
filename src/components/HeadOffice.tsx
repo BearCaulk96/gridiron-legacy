@@ -338,7 +338,7 @@ export function HeadOffice({
       <aside className="office-right">
         <div className="office-team-card">
           <div className="office-team-head">
-            <TeamLogo team={team} size={40} />
+            <TeamLogo team={team} size={30} />
             <div>
               <small>{theme.tagline}</small>
               <h2>
