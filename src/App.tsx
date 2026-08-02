@@ -78,6 +78,20 @@ export default function App() {
     );
   }
 
+  if (game.screen === 'freeAgency') {
+    return (
+      <>
+        <FreeAgency
+          state={state}
+          onSign={actions.signFA}
+          onFinish={actions.finishFreeAgencyWeek}
+          onBack={() => game.setScreen('hub')}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
   return (
     <>
       <Shell state={state} screen={game.screen} setScreen={game.setScreen} onAbandon={game.abandon}>
@@ -92,9 +106,6 @@ export default function App() {
           />
         )}
         {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}
-        {game.screen === 'freeAgency' && (
-          <FreeAgency state={state} onSign={actions.signFA} onFinish={actions.finishFreeAgencyWeek} />
-        )}
         {game.screen === 'standings' && <Standings state={state} />}
         {game.screen === 'cap' && <Cap state={state} />}
       </Shell>

@@ -119,11 +119,18 @@ export function useLeague() {
     signFA: (playerId: string) => {
       setState((prev) => {
         if (!prev) return prev;
+        const player = prev.players[playerId];
+        if (!player) {
+          flash('Player unavailable.');
+          return prev;
+        }
+        const years = player.overall >= 88 ? 4 : player.overall >= 80 ? 3 : player.age >= 30 ? 2 : 3;
         let err: string | null = null;
         const next = cloneUpdate(prev, (s) => {
-          err = signFreeAgent(s, playerId);
+          err = signFreeAgent(s, playerId, years);
         });
         if (err) flash(err);
+        else flash('Contract offer accepted.');
         return next;
       });
     },
