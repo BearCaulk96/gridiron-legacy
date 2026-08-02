@@ -1,18 +1,30 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DIFFICULTIES } from '../game/difficulty';
 import { TEAM_TEMPLATES } from '../game/teams';
-import type { Difficulty } from '../game/types';
+import type { Conference, Difficulty } from '../game/types';
+import { TeamLogo } from './TeamLogo';
 
 interface Props {
   onBack: () => void;
   onStart: (teamId: string, difficulty: Difficulty) => void;
 }
 
+const CONFERENCES: Conference[] = ['American', 'National'];
+const DIVISIONS = ['North', 'East', 'South', 'West'] as const;
+
 export function Setup({ onBack, onStart }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty>('rookie');
   const [teamId, setTeamId] = useState('kc');
+  const [conference, setConference] = useState<Conference>('American');
   const cfg = DIFFICULTIES[difficulty];
   const team = TEAM_TEMPLATES.find((t) => t.id === teamId)!;
+
+  const grouped = useMemo(() => {
+    return DIVISIONS.map((division) => ({
+      division,
+      teams: TEAM_TEMPLATES.filter((t) => t.conference === conference && t.division === division),
+    }));
+  }, [conference]);
 
   return (
     <div className="app-shell">
@@ -49,46 +61,67 @@ export function Setup({ onBack, onStart }: Props) {
           })}
         </div>
         <p style={{ marginTop: '1rem', color: 'var(--chalk-dim)', maxWidth: 720 }}>{cfg.description}</p>
-        <ul className="muted" style={{ margin: '0.5rem 0 0', paddingLeft: '1.1rem', fontSize: '0.9rem' }}>
-          <li>Draft: {cfg.showProspectOverall ? 'full board' : cfg.draftFog > 0.6 ? 'heavy fog + scouting' : 'grades / limited scouting'}</li>
-          <li>Trades: generosity {Math.round(cfg.tradeGenerosity * 100)}% · AI strictness {cfg.aiTradeStrictness.toFixed(2)}</li>
-          <li>Cap: {cfg.capSoftPercent > 1 ? `soft to ${Math.round((cfg.capSoftPercent - 1) * 100)}% over` : 'hard ceiling'}</li>
-          <li>Games: user sim modifier {cfg.simUserBoost >= 0 ? '+' : ''}{cfg.simUserBoost}</li>
-        </ul>
       </div>
 
       <div className="panel panel-pad anim-fade-up anim-delay-1">
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-          <div>
-            <div className="tag">Franchise</div>
-            <h2 style={{ margin: '0.25rem 0', fontFamily: 'var(--font-display)', fontSize: '2.4rem', letterSpacing: '0.04em' }}>
-              <span className="team-swatch" style={{ background: team.primary, width: 18, height: 18 }} />
-              {team.city} {team.name}
-            </h2>
-            <p className="muted" style={{ margin: 0 }}>
-              {team.conference} Conference · {team.division} Division · Original nicknames, real markets
-            </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+            <TeamLogo team={team} size={56} />
+            <div>
+              <div className="tag">Franchise</div>
+              <h2 style={{ margin: '0.15rem 0', fontFamily: 'var(--font-display)', fontSize: '2.2rem', letterSpacing: '0.04em' }}>
+                {team.city} {team.name}
+              </h2>
+              <p className="muted" style={{ margin: 0 }}>
+                {team.conference} Conference · {team.division} Division
+              </p>
+            </div>
           </div>
           <button className="btn btn-primary" onClick={() => onStart(teamId, difficulty)}>
             Take the Job
           </button>
         </div>
-        <div className="team-grid" style={{ marginTop: '1rem' }}>
-          {TEAM_TEMPLATES.map((t) => (
+
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.1rem', flexWrap: 'wrap' }}>
+          {CONFERENCES.map((c) => (
             <button
-              key={t.id}
-              className={`team-choice ${teamId === t.id ? 'selected' : ''}`}
-              onClick={() => setTeamId(t.id)}
+              key={c}
+              className={`btn btn-small ${conference === c ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setConference(c)}
             >
-              <div className="abbrev" style={{ color: t.secondary === '#000000' || t.secondary === '#101820' ? t.primary : t.secondary }}>
-                <span className="team-swatch" style={{ background: t.primary }} />
-                {t.abbrev}
-              </div>
-              <div style={{ fontSize: '0.85rem' }}>{t.city}</div>
-              <div className="muted" style={{ fontSize: '0.8rem' }}>
-                {t.name}
-              </div>
+              {c} Conference
             </button>
+          ))}
+        </div>
+
+        <div style={{ marginTop: '1rem', display: 'grid', gap: '1rem' }}>
+          {grouped.map(({ division, teams }) => (
+            <div key={division}>
+              <div className="tag" style={{ marginBottom: '0.45rem' }}>
+                {conference} · {division}
+              </div>
+              <div className="team-grid">
+                {teams.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`team-choice ${teamId === t.id ? 'selected' : ''}`}
+                    onClick={() => setTeamId(t.id)}
+                    style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}
+                  >
+                    <TeamLogo team={t} size={40} />
+                    <div style={{ textAlign: 'left', minWidth: 0 }}>
+                      <div className="abbrev" style={{ color: t.primary === '#F5F7FA' || t.primary === '#FFFFFF' ? t.secondary : t.secondary }}>
+                        {t.abbrev}
+                      </div>
+                      <div style={{ fontSize: '0.85rem' }}>{t.city}</div>
+                      <div className="muted" style={{ fontSize: '0.8rem' }}>
+                        {t.name}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

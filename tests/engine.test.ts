@@ -50,19 +50,28 @@ describe('Gridiron Legacy engine', () => {
   });
 
   it('rejects lopsided veteran trades', () => {
-    const league = createLeague('ne', 'veteran', 7);
+    const league = createLeague('bos', 'veteran', 7);
     const star = Object.values(league.players)
       .filter((p) => p.teamId === 'kc')
       .sort((a, b) => b.overall - a.overall)[0]!;
     const scrub = Object.values(league.players)
-      .filter((p) => p.teamId === 'ne' && p.overall < 70)
+      .filter((p) => p.teamId === 'bos')
       .sort((a, b) => a.overall - b.overall)[0]!;
     const result = evaluateTrade(league, {
-      fromTeamId: 'ne',
+      fromTeamId: 'bos',
       toTeamId: 'kc',
       offer: [{ type: 'player', playerId: scrub.id }],
       request: [{ type: 'player', playerId: star.id }],
     });
     assert.equal(result.accept, false);
+  });
+
+  it('uses American and National conferences with 32 custom franchises', () => {
+    const league = createLeague('pit', 'casual', 1);
+    assert.equal(league.teams.filter((t) => t.conference === 'American').length, 16);
+    assert.equal(league.teams.filter((t) => t.conference === 'National').length, 16);
+    assert.ok(league.teams.some((t) => t.name === 'Stampede'));
+    assert.ok(league.teams.some((t) => t.city === 'Richmond'));
+    assert.ok(league.teams.every((t) => !!t.accent));
   });
 });

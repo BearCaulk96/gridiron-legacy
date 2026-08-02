@@ -4,6 +4,7 @@ import { describeGame } from '../game/simulation';
 import { hireCoachHint, userTeam } from '../game/season';
 import { formatMoney, teamCapSpace } from '../game/salary';
 import { DIFFICULTIES } from '../game/difficulty';
+import { TeamLogo } from './TeamLogo';
 
 interface Props {
   state: LeagueState;
@@ -28,16 +29,19 @@ export function Hub({ state, onBeginSeason, onAdvanceWeek, onEnterDraft, onOpen 
     <div className="grid-2">
       <section className="panel panel-pad anim-fade-up">
         <div className="tag">Franchise Hub</div>
-        <h2
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '3rem',
-            margin: '0.2rem 0 0.5rem',
-            letterSpacing: '0.04em',
-          }}
-        >
-          {team.city.toUpperCase()} {team.name.toUpperCase()}
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', margin: '0.35rem 0 0.5rem' }}>
+          <TeamLogo team={team} size={64} />
+          <h2
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(2rem, 6vw, 3rem)',
+              margin: 0,
+              letterSpacing: '0.04em',
+            }}
+          >
+            {team.city.toUpperCase()} {team.name.toUpperCase()}
+          </h2>
+        </div>
         <div className="stat-pile" style={{ margin: '1rem 0 1.25rem' }}>
           <div>
             <strong>

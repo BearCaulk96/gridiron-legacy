@@ -1,44 +1,65 @@
 import type { Team } from './types';
 
-/** 32 franchise cities mirroring NFL markets with original nicknames (no pro trademarks). */
-export const TEAM_TEMPLATES: Omit<
+type TeamTemplate = Omit<
   Team,
   'capHit' | 'wins' | 'losses' | 'ties' | 'pointsFor' | 'pointsAgainst' | 'draftPicks' | 'coachIds'
->[] = [
-  { id: 'ari', city: 'Arizona', name: 'Saguaros', abbrev: 'ARI', conference: 'West', division: 'West', primary: '#97233F', secondary: '#FFB612' },
-  { id: 'atl', city: 'Atlanta', name: 'Magnolias', abbrev: 'ATL', conference: 'East', division: 'South', primary: '#A71930', secondary: '#000000' },
-  { id: 'bal', city: 'Baltimore', name: 'Harbormen', abbrev: 'BAL', conference: 'East', division: 'North', primary: '#241773', secondary: '#9E7C0C' },
-  { id: 'buf', city: 'Buffalo', name: 'Blizzard', abbrev: 'BUF', conference: 'East', division: 'East', primary: '#00338D', secondary: '#C60C30' },
-  { id: 'car', city: 'Carolina', name: 'Lowcountry', abbrev: 'CAR', conference: 'East', division: 'South', primary: '#0085CA', secondary: '#101820' },
-  { id: 'chi', city: 'Chicago', name: 'Wind', abbrev: 'CHI', conference: 'West', division: 'North', primary: '#0B162A', secondary: '#C83803' },
-  { id: 'cin', city: 'Cincinnati', name: 'Riverbend', abbrev: 'CIN', conference: 'East', division: 'North', primary: '#FB4F14', secondary: '#000000' },
-  { id: 'cle', city: 'Cleveland', name: 'Lakefront', abbrev: 'CLE', conference: 'East', division: 'North', primary: '#311D00', secondary: '#FF3C00' },
-  { id: 'dal', city: 'Dallas', name: 'Prairie', abbrev: 'DAL', conference: 'West', division: 'East', primary: '#003594', secondary: '#869397' },
-  { id: 'den', city: 'Denver', name: 'Alpine', abbrev: 'DEN', conference: 'West', division: 'West', primary: '#FB4F14', secondary: '#002244' },
-  { id: 'det', city: 'Detroit', name: 'Assembly', abbrev: 'DET', conference: 'West', division: 'North', primary: '#0076B6', secondary: '#B0B7BC' },
-  { id: 'gb', city: 'Green Bay', name: 'Frost', abbrev: 'GB', conference: 'West', division: 'North', primary: '#203731', secondary: '#FFB612' },
-  { id: 'hou', city: 'Houston', name: 'Bayou', abbrev: 'HOU', conference: 'East', division: 'South', primary: '#03202F', secondary: '#A71930' },
-  { id: 'ind', city: 'Indianapolis', name: 'Circle', abbrev: 'IND', conference: 'East', division: 'South', primary: '#002C5F', secondary: '#A2AAAD' },
-  { id: 'jax', city: 'Jacksonville', name: 'Atlantic', abbrev: 'JAX', conference: 'East', division: 'South', primary: '#006778', secondary: '#D7A22A' },
-  { id: 'kc', city: 'Kansas City', name: 'Smoke', abbrev: 'KC', conference: 'West', division: 'West', primary: '#E31837', secondary: '#FFB81C' },
-  { id: 'lv', city: 'Las Vegas', name: 'Mirage', abbrev: 'LV', conference: 'West', division: 'West', primary: '#000000', secondary: '#A5ACAF' },
-  { id: 'lac', city: 'Los Angeles', name: 'Voltage', abbrev: 'LAC', conference: 'West', division: 'West', primary: '#0080C6', secondary: '#FFC20E' },
-  { id: 'lar', city: 'Los Angeles', name: 'Canyon', abbrev: 'LAR', conference: 'West', division: 'West', primary: '#003594', secondary: '#FFA300' },
-  { id: 'mia', city: 'Miami', name: 'Breeze', abbrev: 'MIA', conference: 'East', division: 'East', primary: '#008E97', secondary: '#FC4C02' },
-  { id: 'min', city: 'Minnesota', name: 'Lakes', abbrev: 'MIN', conference: 'West', division: 'North', primary: '#4F2683', secondary: '#FFC62F' },
-  { id: 'ne', city: 'New England', name: 'Granite', abbrev: 'NE', conference: 'East', division: 'East', primary: '#002244', secondary: '#C60C30' },
-  { id: 'no', city: 'New Orleans', name: 'Delta', abbrev: 'NO', conference: 'East', division: 'South', primary: '#D3BC8D', secondary: '#101820' },
-  { id: 'nyg', city: 'New York', name: 'Skyline', abbrev: 'NYG', conference: 'East', division: 'East', primary: '#0B2265', secondary: '#A71930' },
-  { id: 'nyj', city: 'New York', name: 'Borough', abbrev: 'NYJ', conference: 'East', division: 'East', primary: '#125740', secondary: '#000000' },
-  { id: 'phi', city: 'Philadelphia', name: 'Bell', abbrev: 'PHI', conference: 'East', division: 'East', primary: '#004C54', secondary: '#A5ACAF' },
-  { id: 'pit', city: 'Pittsburgh', name: 'Allegheny', abbrev: 'PIT', conference: 'East', division: 'North', primary: '#FFB612', secondary: '#101820' },
-  { id: 'sf', city: 'San Francisco', name: 'Bay', abbrev: 'SF', conference: 'West', division: 'West', primary: '#AA0000', secondary: '#B3995D' },
-  { id: 'sea', city: 'Seattle', name: 'Rainier', abbrev: 'SEA', conference: 'West', division: 'West', primary: '#002244', secondary: '#69BE28' },
-  { id: 'tb', city: 'Tampa Bay', name: 'Citrus', abbrev: 'TB', conference: 'East', division: 'South', primary: '#D50A0A', secondary: '#FF7900' },
-  { id: 'ten', city: 'Tennessee', name: 'Smokies', abbrev: 'TEN', conference: 'East', division: 'South', primary: '#0C2340', secondary: '#4B92DB' },
-  { id: 'was', city: 'Washington', name: 'Potomac', abbrev: 'WAS', conference: 'East', division: 'East', primary: '#5A1414', secondary: '#FFB612' },
+>;
+
+/** 32 franchises — American / National conferences with custom identities. */
+export const TEAM_TEMPLATES: TeamTemplate[] = [
+  // American Conference — North
+  { id: 'pit', city: 'Pittsburgh', name: 'Iron', abbrev: 'PIT', conference: 'American', division: 'North', primary: '#101820', secondary: '#FFB612', accent: '#A5ACAF' },
+  { id: 'cle', city: 'Cleveland', name: 'Rockers', abbrev: 'CLE', conference: 'American', division: 'North', primary: '#C8102E', secondary: '#101820', accent: '#8A8D8F' },
+  { id: 'cin', city: 'Cincinnati', name: 'Rivermen', abbrev: 'CIN', conference: 'American', division: 'North', primary: '#0B7A4B', secondary: '#FFFFFF', accent: '#7EC8E3' },
+  { id: 'bal', city: 'Baltimore', name: 'Armada', abbrev: 'BAL', conference: 'American', division: 'North', primary: '#4B0082', secondary: '#101820', accent: '#C0C0C0' },
+
+  // American Conference — East
+  { id: 'bos', city: 'Boston', name: 'Phantoms', abbrev: 'BOS', conference: 'American', division: 'East', primary: '#0C2340', secondary: '#C8102E', accent: '#FFFFFF' },
+  { id: 'nyc', city: 'New York City', name: 'Liberties', abbrev: 'NYC', conference: 'American', division: 'East', primary: '#0B2265', secondary: '#A5ACAF', accent: '#2E8B57' },
+  { id: 'mia', city: 'Miami', name: 'Cyclones', abbrev: 'MIA', conference: 'American', division: 'East', primary: '#008E97', secondary: '#FC4C02', accent: '#FFFFFF' },
+  { id: 'buf', city: 'Buffalo', name: 'Blizzards', abbrev: 'BUF', conference: 'American', division: 'East', primary: '#00338D', secondary: '#FFFFFF', accent: '#101820' },
+
+  // American Conference — South
+  { id: 'jax', city: 'Jacksonville', name: 'Jaxs', abbrev: 'JAX', conference: 'American', division: 'South', primary: '#006778', secondary: '#D7A22A', accent: '#101820' },
+  { id: 'nas', city: 'Nashville', name: 'Black Bears', abbrev: 'NAS', conference: 'American', division: 'South', primary: '#101820', secondary: '#FF6A00', accent: '#C0C0C0' },
+  { id: 'hou', city: 'Houston', name: 'Apollos', abbrev: 'HOU', conference: 'American', division: 'South', primary: '#0C2340', secondary: '#C8102E', accent: '#FFFFFF' },
+  { id: 'ind', city: 'Indianapolis', name: 'Racers', abbrev: 'IND', conference: 'American', division: 'South', primary: '#0033A0', secondary: '#FFFFFF', accent: '#A2AAAD' },
+
+  // American Conference — West
+  { id: 'lv', city: 'Las Vegas', name: 'Raptors', abbrev: 'LV', conference: 'American', division: 'West', primary: '#101820', secondary: '#C0C0C0', accent: '#FFB612' },
+  { id: 'sd', city: 'San Diego', name: 'Koalas', abbrev: 'SD', conference: 'American', division: 'West', primary: '#F5F7FA', secondary: '#708090', accent: '#A7C7E7' },
+  { id: 'den', city: 'Denver', name: 'Peaks', abbrev: 'DEN', conference: 'American', division: 'West', primary: '#FB4F14', secondary: '#0C2340', accent: '#FFFFFF' },
+  { id: 'kc', city: 'Kansas City', name: 'Stampede', abbrev: 'KC', conference: 'American', division: 'West', primary: '#E31837', secondary: '#FFB81C', accent: '#101820' },
+
+  // National Conference — North
+  { id: 'chi', city: 'Chicago', name: 'Blaze', abbrev: 'CHI', conference: 'National', division: 'North', primary: '#0B162A', secondary: '#C83803', accent: '#FFFFFF' },
+  { id: 'det', city: 'Detroit', name: 'Motors', abbrev: 'DET', conference: 'National', division: 'North', primary: '#B0B7BC', secondary: '#0076B6', accent: '#101820' },
+  { id: 'gb', city: 'Green Bay', name: 'Lumberjacks', abbrev: 'GB', conference: 'National', division: 'North', primary: '#203731', secondary: '#FFB612', accent: '#FFFFFF' },
+  { id: 'min', city: 'Minnesota', name: 'Northmen', abbrev: 'MIN', conference: 'National', division: 'North', primary: '#4F2683', secondary: '#FFC62F', accent: '#FFFFFF' },
+
+  // National Conference — East
+  { id: 'dal', city: 'Dallas', name: 'Wranglers', abbrev: 'DAL', conference: 'National', division: 'East', primary: '#0C2340', secondary: '#869397', accent: '#FFFFFF' },
+  { id: 'phi', city: 'Philadelphia', name: 'Founders', abbrev: 'PHI', conference: 'National', division: 'East', primary: '#004C54', secondary: '#101820', accent: '#A5ACAF' },
+  { id: 'was', city: 'Washington', name: 'Sentinels', abbrev: 'WAS', conference: 'National', division: 'East', primary: '#5A1414', secondary: '#FFB612', accent: '#FFFFFF' },
+  { id: 'ric', city: 'Richmond', name: 'Renegades', abbrev: 'RIC', conference: 'National', division: 'East', primary: '#002868', secondary: '#BF0A30', accent: '#FFFFFF' },
+
+  // National Conference — West
+  { id: 'sea', city: 'Seattle', name: 'Emeralds', abbrev: 'SEA', conference: 'National', division: 'West', primary: '#046A38', secondary: '#0C2340', accent: '#FFFFFF' },
+  { id: 'cal', city: 'California', name: 'Condors', abbrev: 'CAL', conference: 'National', division: 'West', primary: '#AA0000', secondary: '#B3995D', accent: '#101820' },
+  { id: 'la', city: 'Los Angeles', name: 'Stars', abbrev: 'LA', conference: 'National', division: 'West', primary: '#1D4ED8', secondary: '#F5C518', accent: '#FFFFFF' },
+  { id: 'ari', city: 'Arizona', name: 'Scorpions', abbrev: 'ARI', conference: 'National', division: 'West', primary: '#9B111E', secondary: '#101820', accent: '#C2B280' },
+
+  // National Conference — South
+  { id: 'atl', city: 'Atlanta', name: 'Phoenix', abbrev: 'ATL', conference: 'National', division: 'South', primary: '#A71930', secondary: '#101820', accent: '#FFB612' },
+  { id: 'car', city: 'Carolina', name: 'Waves', abbrev: 'CAR', conference: 'National', division: 'South', primary: '#0085CA', secondary: '#A5ACAF', accent: '#101820' },
+  { id: 'tb', city: 'Tampa Bay', name: 'Tritons', abbrev: 'TB', conference: 'National', division: 'South', primary: '#D50A0A', secondary: '#FFB612', accent: '#101820' },
+  { id: 'no', city: 'New Orleans', name: 'Voodoos', abbrev: 'NO', conference: 'National', division: 'South', primary: '#4B0082', secondary: '#C9A227', accent: '#101820' },
 ];
 
 export function teamDisplayName(team: Pick<Team, 'city' | 'name'>): string {
   return `${team.city} ${team.name}`;
+}
+
+export function teamsByConference(conference: Team['conference']): TeamTemplate[] {
+  return TEAM_TEMPLATES.filter((t) => t.conference === conference);
 }

@@ -22,7 +22,7 @@ export type Phase =
   | 'draft'
   | 'freeAgency';
 
-export type Conference = 'East' | 'West';
+export type Conference = 'American' | 'National';
 export type Division = 'North' | 'South' | 'East' | 'West';
 
 export interface Contract {
@@ -91,6 +91,7 @@ export interface Team {
   division: Division;
   primary: string;
   secondary: string;
+  accent: string;
   capHit: number;
   wins: number;
   losses: number;

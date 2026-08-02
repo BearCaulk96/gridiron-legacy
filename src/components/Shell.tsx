@@ -4,6 +4,7 @@ import type { Screen } from '../hooks/useLeague';
 import { DIFFICULTIES } from '../game/difficulty';
 import { formatMoney, teamCapHit, teamCapSpace } from '../game/salary';
 import { userTeam } from '../game/season';
+import { TeamLogo } from './TeamLogo';
 
 interface Props {
   state: LeagueState;
@@ -35,12 +36,14 @@ export function Shell({ state, screen, setScreen, onAbandon, children }: Props) 
           <div className="brand-mark" style={{ fontSize: '2rem' }}>
             GRIDIRON LEGACY
           </div>
-          <div className="muted" style={{ fontSize: '0.85rem' }}>
-            <span className="team-swatch" style={{ background: team.primary }} />
-            {team.city} {team.name} · {cfg.label} · {state.season}
-            {state.phase === 'regular' ? ` · Week ${state.week}` : ` · ${state.phase}`}
-            {' · '}
-            Cap space {formatMoney(teamCapSpace(state, team.id))}
+          <div className="muted" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <TeamLogo team={team} size={22} />
+            <span>
+              {team.city} {team.name} · {cfg.label} · {state.season}
+              {state.phase === 'regular' ? ` · Week ${state.week}` : ` · ${state.phase}`}
+              {' · '}
+              Cap space {formatMoney(teamCapSpace(state, team.id))}
+            </span>
           </div>
         </div>
         <button className="btn btn-ghost btn-small" onClick={onAbandon}>

@@ -66,27 +66,27 @@ function simBracket(state: LeagueState, ids: string[], rng: () => number): strin
 
 function finishRegularSeason(state: LeagueState): void {
   state.phase = 'playoffs';
-  const east = state.teams
-    .filter((t) => t.conference === 'East')
+  const american = state.teams
+    .filter((t) => t.conference === 'American')
     .sort(standingsSort)
     .slice(0, 4);
-  const west = state.teams
-    .filter((t) => t.conference === 'West')
+  const national = state.teams
+    .filter((t) => t.conference === 'National')
     .sort(standingsSort)
     .slice(0, 4);
 
   const rng = createRng(state.season * 17 + 99);
-  const eastChamp = simBracket(
+  const americanChamp = simBracket(
     state,
-    east.map((t) => t.id),
+    american.map((t) => t.id),
     rng,
   );
-  const westChamp = simBracket(
+  const nationalChamp = simBracket(
     state,
-    west.map((t) => t.id),
+    national.map((t) => t.id),
     rng,
   );
-  const championId = simMatch(state, eastChamp, westChamp, rng);
+  const championId = simMatch(state, americanChamp, nationalChamp, rng);
   const champ = state.teams.find((t) => t.id === championId)!;
   state.messages.unshift(`${champ.city} ${champ.name} win the Gridiron Cup!`);
   if (championId === state.userTeamId) {
