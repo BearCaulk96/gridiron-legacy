@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { TEAM_TEMPLATES } from '../game/teams';
-import { TeamLogo } from './TeamLogo';
+import { useEffect, useState } from 'react';
 
 type Modal = 'options' | 'stats' | 'hof' | 'credits' | 'settings' | null;
 
@@ -9,9 +7,6 @@ interface Props {
   onNew: (teamId?: string) => void;
   onContinue: () => void;
 }
-
-const LEFT_IDS = ['pit', 'cle', 'cin', 'bal'] as const;
-const RIGHT_IDS = ['bos', 'nyc', 'mia', 'buf'] as const;
 
 const MENU = [
   {
@@ -131,7 +126,6 @@ function Trophy() {
 
 export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
   const [activeMenu, setActiveMenu] = useState<(typeof MENU)[number]['id']>('new');
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal>(null);
   const [portrait, setPortrait] = useState(false);
 
@@ -146,17 +140,9 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
     };
   }, []);
 
-  const selectedTeam = useMemo(
-    () => TEAM_TEMPLATES.find((t) => t.id === selectedTeamId) ?? null,
-    [selectedTeamId],
-  );
-
-  const leftTeams = LEFT_IDS.map((id) => TEAM_TEMPLATES.find((t) => t.id === id)!);
-  const rightTeams = RIGHT_IDS.map((id) => TEAM_TEMPLATES.find((t) => t.id === id)!);
-
   const runMenu = (id: (typeof MENU)[number]['id']) => {
     setActiveMenu(id);
-    if (id === 'new') onNew(selectedTeamId ?? undefined);
+    if (id === 'new') onNew();
     else if (id === 'load') {
       if (hasSave) onContinue();
       else setModal('stats');
@@ -195,40 +181,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
           </div>
         </header>
 
-        <aside className="title-rail left">
-          {leftTeams.map((team) => (
-            <button
-              key={team.id}
-              className={`title-logo-btn ${selectedTeamId === team.id ? 'active' : ''}`}
-              onClick={() => setSelectedTeamId(team.id)}
-              onDoubleClick={() => onNew(team.id)}
-              title={`${team.city} ${team.name}`}
-            >
-              <TeamLogo team={team} size={52} />
-              <span className="title-logo-tip">
-                {team.city} {team.name}
-              </span>
-            </button>
-          ))}
-        </aside>
-
-        <aside className="title-rail right">
-          {rightTeams.map((team) => (
-            <button
-              key={team.id}
-              className={`title-logo-btn ${selectedTeamId === team.id ? 'active' : ''}`}
-              onClick={() => setSelectedTeamId(team.id)}
-              onDoubleClick={() => onNew(team.id)}
-              title={`${team.city} ${team.name}`}
-            >
-              <TeamLogo team={team} size={52} />
-              <span className="title-logo-tip">
-                {team.city} {team.name}
-              </span>
-            </button>
-          ))}
-        </aside>
-
         <main className="title-center">
           <h1 className="title-wordmark">
             <span className="silver">GRIDIRON</span>
@@ -241,18 +193,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
           <p className="title-slogan">Build your franchise. Make your legacy.</p>
 
           <Trophy />
-
-          {selectedTeam ? (
-            <button className="title-featured" onClick={() => onNew(selectedTeam.id)}>
-              <TeamLogo team={selectedTeam} size={28} />
-              <span>
-                Featured: <strong>{selectedTeam.city} {selectedTeam.name}</strong>
-                <em> — tap New Dynasty or here to start</em>
-              </span>
-            </button>
-          ) : (
-            <p className="title-hint">Tap a team crest to scout a franchise</p>
-          )}
         </main>
 
         <nav className="title-menu" aria-label="Main menu">
@@ -289,7 +229,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
             <button
               onClick={() => {
                 setModal(null);
-                setSelectedTeamId(null);
                 setActiveMenu('new');
               }}
               title="Reset title screen"
