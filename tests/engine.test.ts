@@ -7,7 +7,7 @@ import { evaluateTrade } from '../src/game/trade.ts';
 import { TEAM_TEMPLATES } from '../src/game/teams.ts';
 import { teamCapHit } from '../src/game/salary.ts';
 
-describe('Gridiron Legacy engine', () => {
+describe('Gridiron Dynasty engine', () => {
   it('creates 32 teams with rosters and a schedule', () => {
     const league = createLeague('kc', 'rookie', 42);
     assert.equal(league.teams.length, 32);

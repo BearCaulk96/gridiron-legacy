@@ -1,4 +1,5 @@
-import { Landing } from './components/Landing';
+import { useState } from 'react';
+import { TitleScreen } from './components/TitleScreen';
 import { Setup } from './components/Setup';
 import { Shell } from './components/Shell';
 import { Hub } from './components/Hub';
@@ -14,14 +15,18 @@ import { hasSave } from './game/save';
 
 export default function App() {
   const game = useLeague();
+  const [setupTeamId, setSetupTeamId] = useState<string | undefined>();
 
   if (game.screen === 'landing') {
     return (
       <>
-        <Landing
+        <TitleScreen
           hasSave={hasSave()}
           onContinue={game.continueGame}
-          onNew={() => game.setScreen('setup')}
+          onNew={(teamId) => {
+            setSetupTeamId(teamId);
+            game.setScreen('setup');
+          }}
         />
         {game.toast && <div className="toast">{game.toast}</div>}
       </>
@@ -31,7 +36,11 @@ export default function App() {
   if (game.screen === 'setup' || !game.state) {
     return (
       <>
-        <Setup onBack={() => game.setScreen('landing')} onStart={game.newGame} />
+        <Setup
+          initialTeamId={setupTeamId}
+          onBack={() => game.setScreen('landing')}
+          onStart={game.newGame}
+        />
         {game.toast && <div className="toast">{game.toast}</div>}
       </>
     );

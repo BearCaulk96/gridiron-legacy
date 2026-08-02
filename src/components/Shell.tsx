@@ -34,7 +34,7 @@ export function Shell({ state, screen, setScreen, onAbandon, children }: Props) 
       <header className="nav-bar">
         <div>
           <div className="brand-mark" style={{ fontSize: '2rem' }}>
-            GRIDIRON LEGACY
+            GRIDIRON DYNASTY
           </div>
           <div className="muted" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <TeamLogo team={team} size={22} />

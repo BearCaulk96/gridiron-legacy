@@ -1,4 +1,4 @@
-# Gridiron Legacy
+# Gridiron Dynasty
 
 A browser-based American football **franchise dynasty** simulator.
 

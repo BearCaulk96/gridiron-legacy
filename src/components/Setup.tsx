@@ -5,6 +5,7 @@ import type { Conference, Difficulty } from '../game/types';
 import { TeamLogo } from './TeamLogo';
 
 interface Props {
+  initialTeamId?: string;
   onBack: () => void;
   onStart: (teamId: string, difficulty: Difficulty) => void;
 }
@@ -12,10 +13,11 @@ interface Props {
 const CONFERENCES: Conference[] = ['American', 'National'];
 const DIVISIONS = ['North', 'East', 'South', 'West'] as const;
 
-export function Setup({ onBack, onStart }: Props) {
+export function Setup({ initialTeamId, onBack, onStart }: Props) {
+  const starter = TEAM_TEMPLATES.find((t) => t.id === initialTeamId) ?? TEAM_TEMPLATES.find((t) => t.id === 'kc')!;
   const [difficulty, setDifficulty] = useState<Difficulty>('rookie');
-  const [teamId, setTeamId] = useState('kc');
-  const [conference, setConference] = useState<Conference>('American');
+  const [teamId, setTeamId] = useState(starter.id);
+  const [conference, setConference] = useState<Conference>(starter.conference);
   const cfg = DIFFICULTIES[difficulty];
   const team = TEAM_TEMPLATES.find((t) => t.id === teamId)!;
 

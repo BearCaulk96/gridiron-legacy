@@ -38,12 +38,10 @@ export function useLeague() {
   const [screen, setScreen] = useState<Screen>('landing');
   const [toast, setToast] = useState<string | null>(null);
 
+  // Always open on the title screen; Load Dynasty continues a save.
   useEffect(() => {
     const saved = loadGame();
-    if (saved) {
-      setState(saved);
-      setScreen('hub');
-    }
+    if (saved) setState(saved);
   }, []);
 
   const flash = useCallback((msg: string) => {

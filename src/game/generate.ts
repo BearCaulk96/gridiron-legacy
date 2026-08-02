@@ -223,7 +223,7 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
     coaches,
     schedule: [],
     messages: [
-      `Welcome to Gridiron Legacy. You take the helm of the ${teams.find((t) => t.id === userTeamId)?.city} ${teams.find((t) => t.id === userTeamId)?.name}.`,
+      `Welcome to Gridiron Dynasty. You take the helm of the ${teams.find((t) => t.id === userTeamId)?.city} ${teams.find((t) => t.id === userTeamId)?.name}.`,
       `Difficulty: ${cfg.label}. ${cfg.tagline}`,
       'No microtransactions. No pay-to-win. Pure football decisions.',
     ],
