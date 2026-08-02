@@ -147,9 +147,10 @@ function onEnterWeek(state: LeagueState): void {
 function prepareDraftClass(state: LeagueState): void {
   const existingProspects = Object.values(state.players).filter((p) => p.isProspect && !p.teamId);
   if (existingProspects.length >= 100) {
-    // Refresh scouting points when entering scouting/draft window
-    state.scoutingPoints =
-      state.difficulty === 'veteran' ? 6 : state.difficulty === 'pro' ? 10 : state.difficulty === 'rookie' ? 18 : 40;
+    if (state.scoutingPoints <= 0) {
+      state.scoutingPoints =
+        state.difficulty === 'veteran' ? 6 : state.difficulty === 'pro' ? 10 : state.difficulty === 'rookie' ? 18 : 40;
+    }
     return;
   }
   for (const p of existingProspects) delete state.players[p.id];
@@ -165,6 +166,12 @@ function prepareDraftClass(state: LeagueState): void {
   for (const p of cls) state.players[p.id] = p;
   state.scoutingPoints =
     state.difficulty === 'veteran' ? 6 : state.difficulty === 'pro' ? 10 : state.difficulty === 'rookie' ? 18 : 40;
+}
+
+/** Ensure a prospect class exists when opening scouting/draft UI. */
+export function ensureDraftBoard(state: LeagueState): void {
+  if (state.phase !== 'scouting' && state.phase !== 'draft') return;
+  prepareDraftClass(state);
 }
 
 function resolveNonGameWeek(state: LeagueState, slot: CalendarSlot): void {

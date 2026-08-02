@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { LeagueState, Position } from '../game/types';
 import {
   currentDraftPick,
@@ -10,6 +10,7 @@ import {
 } from '../game/draft';
 import { getDifficulty } from '../game/difficulty';
 import { playerName } from '../game/generate';
+
 interface Props {
   state: LeagueState;
   onDraft: (id: string) => void;
@@ -17,90 +18,106 @@ interface Props {
   onSimRest: () => void;
   onFinish: () => void;
   onBack: () => void;
+  onEnsureBoard: () => void;
 }
 
 const POS: Array<Position | 'ALL'> = ['ALL', 'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S'];
 
-export function Draft({ state, onDraft, onScout, onSimRest, onFinish, onBack }: Props) {
+export function Draft({
+  state,
+  onDraft,
+  onScout,
+  onSimRest,
+  onFinish,
+  onBack,
+  onEnsureBoard,
+}: Props) {
   const [pos, setPos] = useState<Position | 'ALL'>('ALL');
   const cfg = getDifficulty(state.difficulty);
   const pick = currentDraftPick(state);
+  const scoutingOnly = state.phase === 'scouting';
+  const draftComplete = !scoutingOnly && !pick;
+
+  useEffect(() => {
+    onEnsureBoard();
+  }, [onEnsureBoard, state.phase, state.calendarIndex]);
+
   const board = useMemo(() => {
     let list = prospects(state);
     if (pos !== 'ALL') list = list.filter((p) => p.position === pos);
-    return list.slice(0, 80);
+    return list.slice(0, 120);
   }, [state, pos]);
 
   const yourTurn = pick?.teamId === state.userTeamId;
-  const draftComplete = !pick;
-  const scoutingOnly = state.phase === 'scouting';
 
   if (state.phase !== 'draft' && state.phase !== 'scouting') {
     return (
-      <section className="panel panel-pad">
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem' }}>DRAFT BOARD</h2>
-        <p className="muted">Scouting opens in May, with the draft on May Week 3.</p>
-        <button type="button" className="btn btn-ghost" style={{ marginTop: '1rem' }} onClick={onBack}>
-          Back to Office
-        </button>
+      <section className="panel panel-pad draft-panel">
+        <div className="draft-toolbar">
+          <div>
+            <h2 className="draft-title">DRAFT BOARD</h2>
+            <p className="muted">Scouting opens in May, with the draft on May Week 3.</p>
+          </div>
+          <button type="button" className="btn btn-ghost" onClick={onBack}>
+            Back to Office
+          </button>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="panel panel-pad anim-fade-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-        <div>
+    <section className="panel panel-pad draft-panel anim-fade-up">
+      <div className="draft-toolbar">
+        <div className="draft-toolbar-copy">
           <div className="tag">{scoutingOnly ? 'Scouting' : 'Draft'} · {cfg.label}</div>
-          <h2 style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em', fontSize: '2.4rem', margin: '0.2rem 0' }}>
+          <h2 className="draft-title">
             {scoutingOnly
               ? 'SCOUTING BOARD'
               : pick
                 ? `PICK ${pick.overall} · R${pick.round}`
                 : 'DRAFT COMPLETE'}
           </h2>
-          <p className="muted" style={{ margin: 0 }}>
+          <p className="muted draft-sub">
             {revealBoardHint(cfg)} · Scout points: {state.scoutingPoints}
+            {!scoutingOnly && pick
+              ? ` · On the clock: ${state.teams.find((t) => t.id === pick.teamId)?.abbrev ?? ''}${yourTurn ? ' (YOU)' : ''}`
+              : ''}
           </p>
-          {!scoutingOnly && pick && (
-            <p style={{ margin: '0.5rem 0 0' }}>
-              On the clock:{' '}
-              <strong>
-                {state.teams.find((t) => t.id === pick.teamId)?.abbrev}
-                {yourTurn ? ' (YOU)' : ''}
-              </strong>
-            </p>
-          )}
-          {!scoutingOnly && draftComplete && (
-            <p style={{ margin: '0.5rem 0 0' }}>
-              The board is empty — every pick is in. Advance the week to continue.
-            </p>
-          )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn-ghost" onClick={onBack}>
+        <div className="draft-toolbar-actions">
+          <button type="button" className="btn btn-ghost btn-small" onClick={onBack}>
             Office
           </button>
           {!scoutingOnly && !draftComplete && (
-            <button type="button" className="btn btn-ghost" onClick={onSimRest}>
+            <button type="button" className="btn btn-ghost btn-small" onClick={onSimRest}>
               Simulate Remaining
             </button>
           )}
           {!scoutingOnly && draftComplete && (
-            <button type="button" className="btn btn-primary" onClick={onFinish}>
+            <button type="button" className="btn btn-primary btn-small" onClick={onFinish}>
               Advance Week
             </button>
           )}
         </div>
       </div>
 
-      {!draftComplete && (
+      {draftComplete ? (
+        <div className="draft-empty">
+          <p>The board is clear — every pick is in.</p>
+          <button type="button" className="btn btn-primary" onClick={onFinish}>
+            Advance Week
+          </button>
+        </div>
+      ) : (
         <>
-          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', margin: '1rem 0' }}>
+          <div className="draft-filters" role="tablist" aria-label="Position filter">
             {POS.map((p) => (
               <button
                 key={p}
                 type="button"
+                role="tab"
+                aria-selected={pos === p}
                 className={`btn btn-small ${pos === p ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => setPos(p)}
               >
@@ -109,65 +126,59 @@ export function Draft({ state, onDraft, onScout, onSimRest, onFinish, onBack }: 
             ))}
           </div>
 
-          <div className="list-scroll">
+          <div className="draft-board list-scroll" aria-label="Prospect list">
             {board.length === 0 ? (
-              <p className="muted">No prospects available on the board.</p>
+              <div className="draft-empty">
+                <p>No prospects on the board yet. Generating class…</p>
+              </div>
             ) : (
-              <table className="data">
-                <thead>
-                  <tr>
-                    <th>Prospect</th>
-                    <th>Pos</th>
-                    <th>Grade</th>
-                    <th>OVR</th>
-                    <th>POT</th>
-                    <th>Scout</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {board.map((p) => {
-                    const ovr = visibleOverall(state, p);
-                    const pot = visiblePotential(state, p);
-                    return (
-                      <tr key={p.id}>
-                        <td>
-                          {playerName(p)}
-                          {p.scouted && <span className="muted"> · scouted</span>}
-                        </td>
-                        <td>{p.position}</td>
-                        <td>{prospectGrade(state, p)}</td>
-                        <td>{ovr ?? '??'}</td>
-                        <td>{pot ?? '??'}</td>
-                        <td>
-                          {!p.scouted && (
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-small"
-                              onClick={() => onScout(p.id)}
-                              disabled={state.scoutingPoints <= 0}
-                            >
-                              Scout
-                            </button>
-                          )}
-                        </td>
-                        <td>
-                          {!scoutingOnly && (
-                            <button
-                              type="button"
-                              className="btn btn-primary btn-small"
-                              disabled={!yourTurn}
-                              onClick={() => onDraft(p.id)}
-                            >
-                              Draft
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <ul className="draft-list">
+                {board.map((p) => {
+                  const ovr = visibleOverall(state, p);
+                  const pot = visiblePotential(state, p);
+                  return (
+                    <li key={p.id} className="draft-row">
+                      <div className="draft-row-main">
+                        <strong>{playerName(p)}</strong>
+                        <span>
+                          {p.position} · Grade {prospectGrade(state, p)}
+                          {p.scouted ? ' · scouted' : ''}
+                        </span>
+                      </div>
+                      <div className="draft-row-stats">
+                        <span>
+                          OVR <b>{ovr ?? '??'}</b>
+                        </span>
+                        <span>
+                          POT <b>{pot ?? '??'}</b>
+                        </span>
+                      </div>
+                      <div className="draft-row-actions">
+                        {!p.scouted && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-small"
+                            onClick={() => onScout(p.id)}
+                            disabled={state.scoutingPoints <= 0}
+                          >
+                            Scout
+                          </button>
+                        )}
+                        {!scoutingOnly && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-small"
+                            disabled={!yourTurn}
+                            onClick={() => onDraft(p.id)}
+                          >
+                            Draft
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
         </>

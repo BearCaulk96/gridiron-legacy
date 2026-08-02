@@ -57,7 +57,10 @@ export default function App() {
           state={state}
           onPlayGame={() => game.setScreen('gameday')}
           onAdvanceCalendar={actions.advanceCalendar}
-          onOpen={game.setScreen}
+          onOpen={(screen) => {
+            if (screen === 'draft') game.actions.openDraftBoard();
+            else game.setScreen(screen);
+          }}
           onTitle={game.goTitle}
         />
         {game.toast && <div className="toast">{game.toast}</div>}
@@ -94,7 +97,15 @@ export default function App() {
 
   return (
     <>
-      <Shell state={state} screen={game.screen} setScreen={game.setScreen} onAbandon={game.abandon}>
+      <Shell
+        state={state}
+        screen={game.screen}
+        setScreen={(screen) => {
+          if (screen === 'draft') game.actions.openDraftBoard();
+          else game.setScreen(screen);
+        }}
+        onAbandon={game.abandon}
+      >
         {game.screen === 'roster' && <Roster state={state} onRelease={actions.release} />}
         {game.screen === 'coaches' && <Coaches state={state} />}
         {game.screen === 'draft' && (
@@ -105,6 +116,7 @@ export default function App() {
             onSimRest={actions.simDraft}
             onFinish={actions.advanceCalendar}
             onBack={() => game.setScreen('hub')}
+            onEnsureBoard={game.actions.ensureDraftBoard}
           />
         )}
         {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}

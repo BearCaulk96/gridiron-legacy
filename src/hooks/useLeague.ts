@@ -4,6 +4,7 @@ import { clearSave, hasSave as checkSave, loadGame, saveGame } from '../game/sav
 import {
   advanceCalendar,
   completeLiveGameWeek,
+  ensureDraftBoard,
   enterDraft,
   releasePlayer,
   signFreeAgent,
@@ -73,6 +74,21 @@ export function useLeague() {
     setScreen('landing');
   }, []);
 
+  const ensureDraftBoardAction = useCallback(() => {
+    setState((prev) => {
+      if (!prev) return prev;
+      if (prev.phase !== 'scouting' && prev.phase !== 'draft') return prev;
+      const count = Object.values(prev.players).filter((p) => p.isProspect && !p.teamId).length;
+      if (count >= 100) return prev;
+      return cloneUpdate(prev, ensureDraftBoard);
+    });
+  }, []);
+
+  const openDraftBoard = useCallback(() => {
+    setState((prev) => (prev ? cloneUpdate(prev, ensureDraftBoard) : prev));
+    setScreen('draft');
+  }, []);
+
   const actions = {
     advanceCalendar: () => {
       setState((prev) => (prev ? cloneUpdate(prev, advanceCalendar) : prev));
@@ -86,6 +102,8 @@ export function useLeague() {
       setState((prev) => (prev ? cloneUpdate(prev, enterDraft) : prev));
       setScreen('draft');
     },
+    openDraftBoard,
+    ensureDraftBoard: ensureDraftBoardAction,
     draftPlayer: (playerId: string) => {
       setState((prev) => {
         if (!prev) return prev;
