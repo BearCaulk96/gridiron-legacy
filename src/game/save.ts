@@ -12,6 +12,12 @@ export function loadGame(): LeagueState | null {
     if (!raw) return null;
     const data = JSON.parse(raw) as LeagueState;
     if (data.version !== 1) return null;
+    // Discard saves from older franchise maps (pre American/National rebrand)
+    const sample = data.teams?.[0];
+    if (!sample || (sample.conference !== 'American' && sample.conference !== 'National') || !('accent' in sample)) {
+      localStorage.removeItem(KEY);
+      return null;
+    }
     return data;
   } catch {
     return null;
