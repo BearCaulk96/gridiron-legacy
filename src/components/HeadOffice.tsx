@@ -10,6 +10,7 @@ import {
 import { getOfficeTheme } from '../game/officeThemes';
 import { teamPower } from '../game/ratings';
 import { formatMoney, rosterPlayers, teamCapSpace } from '../game/salary';
+import { isDraftInProgress } from '../game/draft';
 import { standings, userGameThisWeek, userTeam } from '../game/season';
 import { TeamLogo } from './TeamLogo';
 import type { Screen } from '../hooks/useLeague';
@@ -189,9 +190,11 @@ export function HeadOffice({
   );
   const artUrl = theme.hasArt ? `${import.meta.env.BASE_URL}offices/${team.id}.jpg` : null;
 
+  const draftOpen = cal.kind === 'draft' && isDraftInProgress(state);
+
   const primaryMode: 'play' | 'draft' | 'advance' = userGame
     ? 'play'
-    : cal.kind === 'draft'
+    : draftOpen
       ? 'draft'
       : 'advance';
 
@@ -215,6 +218,7 @@ export function HeadOffice({
       return `${vsLabel(currentGame, team.id)} ${oppTeam.name.toUpperCase()}`;
     }
     if (primaryMode === 'draft') return 'ENTER THE DRAFT';
+    if (cal.kind === 'draft') return 'DRAFT COMPLETE';
     return cal.shortTitle.toUpperCase();
   })();
 

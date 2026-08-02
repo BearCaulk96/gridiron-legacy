@@ -12,7 +12,7 @@ import {
 } from '../src/game/season.ts';
 import { CALENDAR_LENGTH, YEAR_CALENDAR, currentCalendar } from '../src/game/calendar.ts';
 import { createLiveGame, stepUntilFinal } from '../src/game/playByPlay.ts';
-import { currentDraftPick, draftPlayer, prospects } from '../src/game/draft.ts';
+import { currentDraftPick, draftPlayer, prospects, runFullAiDraft } from '../src/game/draft.ts';
 import { evaluateTrade } from '../src/game/trade.ts';
 import { TEAM_TEMPLATES } from '../src/game/teams.ts';
 import { teamCapHit } from '../src/game/salary.ts';
@@ -121,5 +121,32 @@ describe('Gridiron Dynasty engine', () => {
     assert.equal(currentCalendar(league).month, 'May');
     assert.equal(currentCalendar(league).kind, 'scoutingReport');
     assert.equal(league.phase, 'scouting');
+  });
+
+  it('keeps a selectable board after simulating the prior year draft', () => {
+    const league = startNewGame('kc', 'rookie');
+    while (currentCalendar(league).kind !== 'draft') advanceCalendar(league);
+    runFullAiDraft(league);
+    assert.equal(currentDraftPick(league), null);
+    advanceCalendar(league);
+    assert.equal(currentCalendar(league).kind, 'draftRecap');
+
+    let guard = 0;
+    while (!(currentCalendar(league).kind === 'draft' && league.season > 2026) && guard++ < 80) {
+      advanceCalendar(league);
+    }
+    assert.equal(currentCalendar(league).kind, 'draft');
+    assert.ok(prospects(league).length > 50);
+    const pick = currentDraftPick(league);
+    assert.ok(pick, 'second-year draft should still have picks remaining');
+  });
+
+  it('advances past draft week after the board is simulated out', () => {
+    const league = startNewGame('phi', 'casual');
+    while (currentCalendar(league).kind !== 'draft') advanceCalendar(league);
+    runFullAiDraft(league);
+    assert.equal(currentDraftPick(league), null);
+    advanceCalendar(league);
+    assert.equal(currentCalendar(league).kind, 'draftRecap');
   });
 });

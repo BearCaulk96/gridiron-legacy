@@ -54,6 +54,8 @@ export interface Player {
   contract: Contract | null;
   draftRound?: number;
   draftPick?: number;
+  /** League year the player was drafted (used to track in-progress drafts). */
+  draftYear?: number;
   isProspect?: boolean;
   scouted?: boolean;
   injuryWeeks: number;

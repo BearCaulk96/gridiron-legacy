@@ -65,6 +65,24 @@ export function userDraftPicksThisYear(state: LeagueState) {
     .sort((a, b) => a.round - b.round);
 }
 
+/** How many picks have been made in the current league year's draft. */
+export function picksMadeThisDraft(state: LeagueState): number {
+  const orderLen = 32 * 7;
+  const tagged = Object.values(state.players).filter(
+    (p) => p.draftYear === state.season && p.draftRound != null && p.teamId !== null,
+  ).length;
+  if (tagged > 0) return tagged;
+
+  // Legacy saves: players drafted before draftYear existed.
+  const legacy = Object.values(state.players).filter(
+    (p) => p.draftRound != null && p.draftPick != null && p.teamId !== null && p.draftYear == null,
+  ).length;
+  const undrafted = prospects(state).length;
+  // Prior-year rookies look like "taken" picks — ignore them when a fresh class is on the board.
+  if (legacy >= orderLen && undrafted > 0) return 0;
+  return legacy;
+}
+
 /** Returns current pick owner for sequential draft, or null if draft complete. */
 export function currentDraftPick(state: LeagueState): {
   round: number;
@@ -73,9 +91,7 @@ export function currentDraftPick(state: LeagueState): {
   teamId: string;
 } | null {
   const order = draftOrder(state);
-  const taken = Object.values(state.players).filter(
-    (p) => p.draftRound != null && p.draftPick != null && p.teamId !== null,
-  ).length;
+  const taken = picksMadeThisDraft(state);
   if (taken >= order.length) return null;
   const slot = order[taken]!;
   return {
@@ -84,6 +100,11 @@ export function currentDraftPick(state: LeagueState): {
     overall: taken + 1,
     teamId: slot.teamId,
   };
+}
+
+/** True while draft week still has picks remaining. */
+export function isDraftInProgress(state: LeagueState): boolean {
+  return currentDraftPick(state) != null;
 }
 
 export function draftOrder(state: LeagueState): { teamId: string; round: number; pickInRound: number }[] {
@@ -124,6 +145,7 @@ export function draftPlayer(state: LeagueState, playerId: string, teamId: string
   player.scouted = true;
   player.draftRound = pick.round;
   player.draftPick = pick.overall;
+  player.draftYear = state.season;
   const years = pick.round <= 2 ? 4 : 3;
   const c = suggestedContract(Math.min(player.overall, 78), player.age, years);
   // Rookie scale discount

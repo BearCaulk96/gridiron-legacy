@@ -103,6 +103,8 @@ export default function App() {
             onDraft={actions.draftPlayer}
             onScout={actions.scout}
             onSimRest={actions.simDraft}
+            onFinish={actions.advanceCalendar}
+            onBack={() => game.setScreen('hub')}
           />
         )}
         {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}
