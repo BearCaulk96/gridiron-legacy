@@ -38,16 +38,25 @@ html,
 body,
 #root {
   margin: 0;
+  height: 100%;
   min-height: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 80% 50% at 50% -10%, rgba(240, 162, 2, 0.18), transparent 55%),
     radial-gradient(ellipse 60% 40% at 100% 0%, rgba(20, 90, 67, 0.35), transparent 50%),
     linear-gradient(180deg, #0a1628 0%, var(--turf-deep) 42%, #04110d 100%);
   background-attachment: fixed;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 button,
@@ -71,6 +80,70 @@ a {
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 1.25rem 0 3rem;
+}
+
+.app-shell-locked {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.65rem 0 0.75rem;
+  box-sizing: border-box;
+}
+
+.app-shell-locked .nav-bar {
+  flex-shrink: 0;
+  margin-bottom: 0.35rem;
+}
+
+.app-shell-locked .nav-links {
+  flex-shrink: 0;
+  margin-bottom: 0.35rem;
+}
+
+.app-shell-capline {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.app-shell-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell-body > .panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin-bottom: 0;
+}
+
+.app-shell-body > .panel > h2,
+.app-shell-body > .panel > .tag {
+  flex-shrink: 0;
+}
+
+.app-shell-body .panel h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem) !important;
+  margin-top: 0.1rem !important;
+  margin-bottom: 0.45rem !important;
+}
+
+.app-shell-body .list-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .brand-mark {
@@ -443,8 +516,9 @@ table.data tr:hover td {
 }
 
 .list-scroll {
-  max-height: 420px;
+  max-height: none;
   overflow: auto;
+  min-height: 0;
 }
 
 .msg-list {
@@ -1429,11 +1503,16 @@ table.data tr:hover td {
 
 /* —— GameDay live field viewer —— */
 .gameday-root {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
   padding: 0.85rem 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  box-sizing: border-box;
   background:
     radial-gradient(ellipse 70% 45% at 50% 0%, rgba(20, 90, 67, 0.35), transparent 55%),
     linear-gradient(180deg, #061018 0%, #0a1f16 55%, #040c0a 100%);
@@ -1846,11 +1925,15 @@ table.data tr:hover td {
 .fa-root {
   --fa-line: rgba(232, 228, 217, 0.14);
   --fa-panel: rgba(10, 16, 24, 0.92);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: 0.65rem;
-  padding: 0.75rem 0.85rem 0.65rem;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 0.4rem;
+  padding: 0.45rem 0.65rem 0.4rem;
+  box-sizing: border-box;
   background:
     radial-gradient(ellipse 70% 40% at 80% 0%, color-mix(in srgb, var(--fa-primary) 35%, transparent), transparent 55%),
     radial-gradient(ellipse 50% 35% at 10% 100%, rgba(20, 90, 67, 0.28), transparent 50%),
@@ -1861,8 +1944,10 @@ table.data tr:hover td {
 .fa-top {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1.1fr auto;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
+  flex-shrink: 0;
+  min-height: 0;
 }
 
 .fa-team {
@@ -1875,7 +1960,7 @@ table.data tr:hover td {
   margin: 0;
   font-family: var(--font-display);
   letter-spacing: 0.06em;
-  font-size: clamp(1.2rem, 2.4vw, 1.85rem);
+  font-size: clamp(1rem, 2vw, 1.45rem);
   line-height: 1;
 }
 
@@ -1919,7 +2004,7 @@ table.data tr:hover td {
   margin: 0;
   font-family: var(--font-display);
   letter-spacing: 0.1em;
-  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
   line-height: 0.95;
 }
 
@@ -1970,11 +2055,12 @@ table.data tr:hover td {
 .fa-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: end;
-  padding: 0.55rem 0.65rem;
+  padding: 0.35rem 0.5rem;
   background: var(--fa-panel);
   border: 1px solid var(--fa-line);
+  flex-shrink: 0;
 }
 
 .fa-filters label {
@@ -2011,15 +2097,17 @@ table.data tr:hover td {
 
 .fa-main {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.85fr);
+  gap: 0.5rem;
   min-height: 0;
+  overflow: hidden;
 }
 
 .fa-list-panel {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   background: var(--fa-panel);
   border: 1px solid var(--fa-line);
 }
@@ -2027,6 +2115,8 @@ table.data tr:hover td {
 .fa-table-wrap {
   overflow: auto;
   flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .fa-table {
@@ -2049,7 +2139,7 @@ table.data tr:hover td {
 }
 
 .fa-table td {
-  padding: 0.45rem 0.5rem;
+  padding: 0.3rem 0.45rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   vertical-align: middle;
 }
@@ -2080,8 +2170,8 @@ table.data tr:hover td {
 }
 
 .fa-portrait {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -2194,12 +2284,13 @@ table.data tr:hover td {
 .fa-detail {
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   background: var(--fa-panel);
   border: 1px solid var(--fa-line);
-  padding: 0.75rem;
+  padding: 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.45rem;
 }
 
 .fa-detail-head {
@@ -2213,7 +2304,7 @@ table.data tr:hover td {
   margin: 0;
   font-family: var(--font-display);
   letter-spacing: 0.04em;
-  font-size: 1.45rem;
+  font-size: 1.15rem;
 }
 
 .fa-detail-id p {
@@ -2367,14 +2458,15 @@ table.data tr:hover td {
 .fa-offer {
   margin-top: auto;
   width: 100%;
-  padding: 0.9rem 1rem;
+  padding: 0.65rem 0.85rem;
   border: 1px solid #f0c14b;
   background: linear-gradient(180deg, #f0c14b, #d4a017);
   color: #1a1200;
   font-family: var(--font-display);
   letter-spacing: 0.1em;
-  font-size: 1.15rem;
+  font-size: 1rem;
   box-shadow: 0 10px 24px rgba(212, 160, 23, 0.28);
+  flex-shrink: 0;
 }
 
 .fa-offer:hover:not(:disabled) {
@@ -2394,12 +2486,14 @@ table.data tr:hover td {
 
 .fa-pos-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
   align-items: stretch;
-  padding: 0.4rem;
+  padding: 0.3rem;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid var(--fa-line);
+  flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .fa-pos-bar > button {
@@ -2469,10 +2563,218 @@ table.data tr:hover td {
 
   .fa-main {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 38%);
   }
 
   .fa-detail {
     max-height: none;
+  }
+}
+
+/* —— Locked setup (difficulty + team) —— */
+.setup-root {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 0.55rem;
+  width: min(1180px, calc(100% - 1.25rem));
+  margin: 0 auto;
+  padding: 0.65rem 0 0.75rem;
+  box-sizing: border-box;
+}
+
+.setup-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.setup-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem) !important;
+  margin: 0.1rem 0 0 !important;
+}
+
+.setup-top-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.setup-diff {
+  flex-shrink: 0;
+  padding: 0.55rem 0.65rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.setup-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.setup-diff-card {
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 0;
+}
+
+.setup-diff-card strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  font-size: 1.05rem;
+}
+
+.setup-diff-card span {
+  font-size: 0.68rem;
+  color: var(--chalk-dim);
+  line-height: 1.25;
+}
+
+.setup-diff-card.selected,
+.setup-diff-card:hover {
+  border-color: var(--amber);
+}
+
+.setup-diff-desc {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--chalk-dim);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.setup-franchise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  padding: 0.45rem 0.65rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.setup-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.setup-selected h2 {
+  margin: 0.05rem 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.setup-selected p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+}
+
+.setup-conf {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.setup-teams {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.setup-div {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.setup-team-grid {
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.setup-team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  text-align: left;
+  min-height: 0;
+}
+
+.setup-team span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.setup-team strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.setup-team small {
+  font-size: 0.62rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setup-team.selected {
+  border-color: var(--amber);
+  background: rgba(240, 162, 2, 0.1);
+}
+
+@media (max-width: 900px) {
+  .setup-diff-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .setup-teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .setup-teams {
+    grid-template-columns: 1fr;
   }
 }
 

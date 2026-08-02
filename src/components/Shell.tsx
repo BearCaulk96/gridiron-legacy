@@ -32,14 +32,14 @@ export function Shell({ state, screen, setScreen, onAbandon, children }: Props) 
   const cal = currentCalendar(state);
 
   return (
-    <div className="app-shell">
+    <div className="app-shell app-shell-locked">
       <header className="nav-bar">
         <div>
-          <div className="brand-mark" style={{ fontSize: '2rem' }}>
+          <div className="brand-mark" style={{ fontSize: '1.7rem' }}>
             GRIDIRON DYNASTY
           </div>
-          <div className="muted" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <TeamLogo team={team} size={22} />
+          <div className="muted" style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <TeamLogo team={team} size={20} />
             <span>
               {team.city} {team.name} · {cfg.label} · {formatCalendarLabel(cal, state.season)} ·{' '}
               {cal.shortTitle}
@@ -52,18 +52,18 @@ export function Shell({ state, screen, setScreen, onAbandon, children }: Props) 
           New Game
         </button>
       </header>
-      <nav className="nav-links" style={{ marginBottom: '1rem' }}>
+      <nav className="nav-links">
         {LINKS.map((l) => (
           <button key={l.id} className={screen === l.id ? 'active' : ''} onClick={() => setScreen(l.id)}>
             {l.label}
           </button>
         ))}
       </nav>
-      <div className="muted" style={{ fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+      <div className="muted app-shell-capline">
         Cap used {formatMoney(teamCapHit(state, team.id))} / {formatMoney(state.salaryCap)}
         {cfg.capSoftPercent > 1 ? ` (soft to ${formatMoney(Math.floor(state.salaryCap * cfg.capSoftPercent))})` : ''}
       </div>
-      {children}
+      <div className="app-shell-body">{children}</div>
     </div>
   );
 }

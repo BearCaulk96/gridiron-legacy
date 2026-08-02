@@ -30,8 +30,6 @@ interface Props {
   onBack: () => void;
 }
 
-const PAGE_SIZE = 8;
-
 type OvrFilter = 'ALL' | '90+' | '80-89' | '70-79' | '<70';
 type AgeFilter = 'ALL' | '21-25' | '26-29' | '30+';
 type ProgFilter = 'ALL' | Progression;
@@ -104,7 +102,6 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
   const [ageFilter, setAgeFilter] = useState<AgeFilter>('ALL');
   const [progFilter, setProgFilter] = useState<ProgFilter>('ALL');
   const [interestFilter, setInterestFilter] = useState<InterestFilter>('ALL');
-  const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const agents = useMemo(() => freeAgents(state), [state]);
@@ -126,12 +123,8 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
     });
   }, [agents, posTab, posFilter, ovrFilter, ageFilter, progFilter, interestFilter, state]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount - 1);
-  const pageRows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
-
   const selected =
-    (selectedId ? filtered.find((p) => p.id === selectedId) : null) ?? pageRows[0] ?? null;
+    (selectedId ? filtered.find((p) => p.id === selectedId) : null) ?? filtered[0] ?? null;
 
   const resetFilters = () => {
     setPosTab('ALL');
@@ -140,7 +133,6 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
     setAgeFilter('ALL');
     setProgFilter('ALL');
     setInterestFilter('ALL');
-    setPage(0);
   };
 
   const faWeek =
@@ -206,10 +198,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
           POSITION
           <select
             value={posFilter}
-            onChange={(e) => {
-              setPosFilter(e.target.value as Position | 'ALL');
-              setPage(0);
-            }}
+            onChange={(e) => setPosFilter(e.target.value as Position | 'ALL')}
           >
             <option value="ALL">ALL</option>
             {(['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S', 'K', 'P'] as Position[]).map(
@@ -225,10 +214,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
           OVR RATING
           <select
             value={ovrFilter}
-            onChange={(e) => {
-              setOvrFilter(e.target.value as OvrFilter);
-              setPage(0);
-            }}
+            onChange={(e) => setOvrFilter(e.target.value as OvrFilter)}
           >
             <option value="ALL">ALL</option>
             <option value="90+">90+</option>
@@ -241,10 +227,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
           AGE
           <select
             value={ageFilter}
-            onChange={(e) => {
-              setAgeFilter(e.target.value as AgeFilter);
-              setPage(0);
-            }}
+            onChange={(e) => setAgeFilter(e.target.value as AgeFilter)}
           >
             <option value="ALL">ALL</option>
             <option value="21-25">21–25</option>
@@ -256,10 +239,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
           PROGRESSION
           <select
             value={progFilter}
-            onChange={(e) => {
-              setProgFilter(e.target.value as ProgFilter);
-              setPage(0);
-            }}
+            onChange={(e) => setProgFilter(e.target.value as ProgFilter)}
           >
             <option value="ALL">ALL</option>
             <option value="SUPERSTAR">SUPERSTAR</option>
@@ -277,7 +257,6 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
             onChange={(e) => {
               const v = e.target.value;
               setInterestFilter(v === 'ALL' ? 'ALL' : (Number(v) as Interest));
-              setPage(0);
             }}
           >
             <option value="ALL">ALL</option>
@@ -308,7 +287,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {pageRows.map((p) => {
+                {filtered.map((p) => {
                   const demand = contractDemand(p);
                   const interest = interestInTeam(state, p);
                   const fit = schemeFit(state, p);
@@ -348,7 +327,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
                     </tr>
                   );
                 })}
-                {!pageRows.length && (
+                {!filtered.length && (
                   <tr>
                     <td colSpan={8} className="fa-empty">
                       No free agents match these filters.
@@ -360,25 +339,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
           </div>
           <div className="fa-list-foot">
             <span>SORTED BY: OVERALL (HIGHEST TO LOWEST)</span>
-            <div className="fa-pager">
-              <button
-                type="button"
-                disabled={safePage <= 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                ‹
-              </button>
-              <strong>
-                PAGE {safePage + 1} OF {pageCount}
-              </strong>
-              <button
-                type="button"
-                disabled={safePage >= pageCount - 1}
-                onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-              >
-                ›
-              </button>
-            </div>
+            <strong>{filtered.length} PLAYERS</strong>
           </div>
         </section>
 
@@ -479,10 +440,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
             key={tab.id}
             type="button"
             className={posTab === tab.id ? 'active' : ''}
-            onClick={() => {
-              setPosTab(tab.id);
-              setPage(0);
-            }}
+            onClick={() => setPosTab(tab.id)}
           >
             <span className="fa-pos-icon" data-pos={tab.id} />
             <strong>{tab.label === 'ALL' ? 'ALL PLAYERS' : tab.label}</strong>
