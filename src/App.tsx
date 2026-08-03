@@ -95,6 +95,24 @@ export default function App() {
     );
   }
 
+  if (game.screen === 'draft') {
+    return (
+      <>
+        <Draft
+          state={state}
+          onDraft={actions.draftPlayer}
+          onScout={actions.scout}
+          onSimRest={actions.simDraft}
+          onSimToUser={actions.simToUserPick}
+          onFinish={actions.advanceCalendar}
+          onBack={() => game.setScreen('hub')}
+          onEnsureBoard={game.actions.ensureDraftBoard}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
   return (
     <>
       <Shell
@@ -108,17 +126,6 @@ export default function App() {
       >
         {game.screen === 'roster' && <Roster state={state} onRelease={actions.release} />}
         {game.screen === 'coaches' && <Coaches state={state} />}
-        {game.screen === 'draft' && (
-          <Draft
-            state={state}
-            onDraft={actions.draftPlayer}
-            onScout={actions.scout}
-            onSimRest={actions.simDraft}
-            onFinish={actions.advanceCalendar}
-            onBack={() => game.setScreen('hub')}
-            onEnsureBoard={game.actions.ensureDraftBoard}
-          />
-        )}
         {game.screen === 'trade' && <Trade state={state} onPropose={actions.proposeTrade} />}
         {game.screen === 'standings' && <Standings state={state} />}
         {game.screen === 'cap' && <Cap state={state} />}

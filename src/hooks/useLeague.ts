@@ -122,6 +122,9 @@ export function useLeague() {
     simDraft: () => {
       setState((prev) => (prev ? cloneUpdate(prev, runFullAiDraft) : prev));
     },
+    simToUserPick: () => {
+      setState((prev) => (prev ? cloneUpdate(prev, autoPickUntilUser) : prev));
+    },
     scout: (playerId: string) => {
       setState((prev) => {
         if (!prev) return prev;

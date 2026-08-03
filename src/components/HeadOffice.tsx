@@ -322,6 +322,13 @@ export function HeadOffice({
             <small>Manage trades, offers and picks.</small>
           </span>
         </button>
+        <button className="office-nav-btn" onClick={() => onOpen('draft')}>
+          <IconFootball />
+          <span>
+            <strong>DRAFT BOARD</strong>
+            <small>Scout prospects and make draft picks.</small>
+          </span>
+        </button>
         <div className="office-left-extra">
           <button onClick={() => onOpen('coaches')}>Coaches</button>
           <button onClick={() => onOpen('standings')}>Standings</button>
