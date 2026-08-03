@@ -21,8 +21,6 @@ import {
   type Interest,
   type Progression,
 } from '../game/freeAgencyMarket';
-import { TeamLogo } from './TeamLogo';
-
 interface Props {
   state: LeagueState;
   onSign: (id: string) => void;
@@ -103,6 +101,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
   const [progFilter, setProgFilter] = useState<ProgFilter>('ALL');
   const [interestFilter, setInterestFilter] = useState<InterestFilter>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const agents = useMemo(() => freeAgents(state), [state]);
 
@@ -150,124 +149,107 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
         } as CSSProperties
       }
     >
-      <header className="fa-top">
-        <div className="fa-team">
-          <TeamLogo team={team} size={42} />
-          <div>
-            <button type="button" className="fa-back" onClick={onBack}>
-              ← Office
-            </button>
-            <h1>
-              {team.city.toUpperCase()} {team.name.toUpperCase()}
-            </h1>
-          </div>
-        </div>
-
-        <div className="fa-meta">
-          <div className="fa-cap">
-            CAP SPACE: <strong>{formatMoney(cap)}</strong>
-          </div>
-          <div className="fa-needs">
-            TEAM NEEDS: <strong>{needs.join(', ')}</strong>
-          </div>
-        </div>
-
+      <header className="fa-top fa-top-compact">
+        <button type="button" className="fa-back" onClick={onBack}>
+          ← Office
+        </button>
         <div className="fa-title-block">
           <h2>FREE AGENCY</h2>
-          <p>AVAILABLE PLAYERS: {agents.length}</p>
+          <p>
+            Week {faWeek}/4 · {agents.length} players · Cap {formatMoney(cap)}
+          </p>
         </div>
-
-        <div className="fa-legend">
-          <div className="fa-legend-row">
-            <Stars level={3} /> High Interest
-          </div>
-          <div className="fa-legend-row">
-            <Stars level={2} /> Neutral
-          </div>
-          <div className="fa-legend-row">
-            <Stars level={1} /> Low Interest
-          </div>
-          <div className="fa-week-pill">
-            FREE AGENCY WEEK {faWeek} OF 4
-          </div>
-        </div>
+        <button
+          type="button"
+          className={`fa-filter-toggle ${filtersOpen ? 'open' : ''}`}
+          onClick={() => setFiltersOpen((v) => !v)}
+          aria-expanded={filtersOpen}
+        >
+          Filters
+        </button>
       </header>
 
-      <div className="fa-filters">
-        <label>
-          POSITION
-          <select
-            value={posFilter}
-            onChange={(e) => setPosFilter(e.target.value as Position | 'ALL')}
-          >
-            <option value="ALL">ALL</option>
-            {(['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S', 'K', 'P'] as Position[]).map(
-              (p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
-        <label>
-          OVR RATING
-          <select
-            value={ovrFilter}
-            onChange={(e) => setOvrFilter(e.target.value as OvrFilter)}
-          >
-            <option value="ALL">ALL</option>
-            <option value="90+">90+</option>
-            <option value="80-89">80–89</option>
-            <option value="70-79">70–79</option>
-            <option value="<70">&lt;70</option>
-          </select>
-        </label>
-        <label>
-          AGE
-          <select
-            value={ageFilter}
-            onChange={(e) => setAgeFilter(e.target.value as AgeFilter)}
-          >
-            <option value="ALL">ALL</option>
-            <option value="21-25">21–25</option>
-            <option value="26-29">26–29</option>
-            <option value="30+">30+</option>
-          </select>
-        </label>
-        <label>
-          PROGRESSION
-          <select
-            value={progFilter}
-            onChange={(e) => setProgFilter(e.target.value as ProgFilter)}
-          >
-            <option value="ALL">ALL</option>
-            <option value="SUPERSTAR">SUPERSTAR</option>
-            <option value="PURE TALENT">PURE TALENT</option>
-            <option value="ATHLETE">ATHLETE</option>
-            <option value="DEVELOPING">DEVELOPING</option>
-            <option value="VETERAN">VETERAN</option>
-            <option value="COMMON">COMMON</option>
-          </select>
-        </label>
-        <label>
-          INTEREST
-          <select
-            value={interestFilter === 'ALL' ? 'ALL' : String(interestFilter)}
-            onChange={(e) => {
-              const v = e.target.value;
-              setInterestFilter(v === 'ALL' ? 'ALL' : (Number(v) as Interest));
-            }}
-          >
-            <option value="ALL">ALL</option>
-            <option value="3">HIGH (3★)</option>
-            <option value="2">NEUTRAL (2★)</option>
-            <option value="1">LOW (1★)</option>
-          </select>
-        </label>
-        <button type="button" className="fa-reset" onClick={resetFilters}>
-          RESET FILTERS
-        </button>
+      {filtersOpen && (
+        <div className="fa-filters">
+          <label>
+            POSITION
+            <select
+              value={posFilter}
+              onChange={(e) => setPosFilter(e.target.value as Position | 'ALL')}
+            >
+              <option value="ALL">ALL</option>
+              {(['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S', 'K', 'P'] as Position[]).map(
+                (p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+          <label>
+            OVR RATING
+            <select
+              value={ovrFilter}
+              onChange={(e) => setOvrFilter(e.target.value as OvrFilter)}
+            >
+              <option value="ALL">ALL</option>
+              <option value="90+">90+</option>
+              <option value="80-89">80–89</option>
+              <option value="70-79">70–79</option>
+              <option value="<70">&lt;70</option>
+            </select>
+          </label>
+          <label>
+            AGE
+            <select
+              value={ageFilter}
+              onChange={(e) => setAgeFilter(e.target.value as AgeFilter)}
+            >
+              <option value="ALL">ALL</option>
+              <option value="21-25">21–25</option>
+              <option value="26-29">26–29</option>
+              <option value="30+">30+</option>
+            </select>
+          </label>
+          <label>
+            PROGRESSION
+            <select
+              value={progFilter}
+              onChange={(e) => setProgFilter(e.target.value as ProgFilter)}
+            >
+              <option value="ALL">ALL</option>
+              <option value="SUPERSTAR">SUPERSTAR</option>
+              <option value="PURE TALENT">PURE TALENT</option>
+              <option value="ATHLETE">ATHLETE</option>
+              <option value="DEVELOPING">DEVELOPING</option>
+              <option value="VETERAN">VETERAN</option>
+              <option value="COMMON">COMMON</option>
+            </select>
+          </label>
+          <label>
+            INTEREST
+            <select
+              value={interestFilter === 'ALL' ? 'ALL' : String(interestFilter)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setInterestFilter(v === 'ALL' ? 'ALL' : (Number(v) as Interest));
+              }}
+            >
+              <option value="ALL">ALL</option>
+              <option value="3">HIGH (3★)</option>
+              <option value="2">NEUTRAL (2★)</option>
+              <option value="1">LOW (1★)</option>
+            </select>
+          </label>
+          <button type="button" className="fa-reset" onClick={resetFilters}>
+            RESET
+          </button>
+        </div>
+      )}
+
+      <div className="fa-needs-strip">
+        Needs: <strong>{needs.join(' · ') || 'Balanced'}</strong>
       </div>
 
       <div className="fa-main">

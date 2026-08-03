@@ -122,7 +122,7 @@ export default function App() {
           if (screen === 'draft') game.actions.openDraftBoard();
           else game.setScreen(screen);
         }}
-        onAbandon={game.abandon}
+        onTitle={game.goTitle}
       >
         {game.screen === 'roster' && <Roster state={state} onRelease={actions.release} />}
         {game.screen === 'coaches' && <Coaches state={state} />}

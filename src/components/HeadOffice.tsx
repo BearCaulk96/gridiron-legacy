@@ -13,6 +13,7 @@ import { formatMoney, rosterPlayers, teamCapSpace } from '../game/salary';
 import { isDraftInProgress } from '../game/draft';
 import { standings, userGameThisWeek, userTeam } from '../game/season';
 import { TeamLogo } from './TeamLogo';
+import { GameMenu, type MenuDestination } from './GameMenu';
 import type { Screen } from '../hooks/useLeague';
 
 interface Props {
@@ -47,37 +48,19 @@ function ordinal(n: number): string {
   return `${n}TH`;
 }
 
-function IconPeople() {
-  return (
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <circle cx="9" cy="8" r="3" />
-      <circle cx="17" cy="9" r="2.5" />
-      <path d="M3 19c1.5-3 4-4.5 6-4.5S13.5 16 15 19M14 14.5c1.5-.3 3.2-.2 5 1.5" />
-    </svg>
-  );
-}
-
-function IconHandshake() {
-  return (
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <path d="M8 13l3 3 8-8M3 14l5 5 2-2M16 7l2 2 3-1" />
-    </svg>
-  );
-}
-
-function IconTrade() {
-  return (
-    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <path d="M4 8h13l-3-3M20 16H7l3 3" />
-    </svg>
-  );
-}
-
 function IconFootball() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
       <ellipse cx="12" cy="12" rx="9" ry="6" transform="rotate(-35 12 12)" />
       <path d="M10 10l4 4M11 9.5h2M11 14.5h2" stroke="#111" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+function IconMenu() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
 }
@@ -155,9 +138,20 @@ export function HeadOffice({
   const divRank = divTeams.findIndex((t) => t.id === team.id) + 1;
 
   const [centerIdx, setCenterIdx] = useState(state.calendarIndex);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     setCenterIdx(state.calendarIndex);
   }, [state.calendarIndex, team.id, state.season]);
+
+  const openMenuItem = (id: MenuDestination) => {
+    setMenuOpen(false);
+    if (id === 'title') {
+      onTitle();
+      return;
+    }
+    if (id === 'hub') return;
+    onOpen(id);
+  };
 
   const slots = [-1, 0, 1].map((delta) => {
     const idx = centerIdx + delta;
@@ -300,43 +294,6 @@ export function HeadOffice({
         </button>
       </header>
 
-      <aside className="office-left">
-        <button className="office-nav-btn" onClick={() => onOpen('roster')}>
-          <IconPeople />
-          <span>
-            <strong>MY TEAM</strong>
-            <small>Roster, lineup, depth chart, & more.</small>
-          </span>
-        </button>
-        <button className="office-nav-btn" onClick={() => onOpen('freeAgency')}>
-          <IconHandshake />
-          <span>
-            <strong>FREE AGENTS</strong>
-            <small>View available players and signings.</small>
-          </span>
-        </button>
-        <button className="office-nav-btn" onClick={() => onOpen('trade')}>
-          <IconTrade />
-          <span>
-            <strong>TRADE BLOCK</strong>
-            <small>Manage trades, offers and picks.</small>
-          </span>
-        </button>
-        <button className="office-nav-btn" onClick={() => onOpen('draft')}>
-          <IconFootball />
-          <span>
-            <strong>DRAFT BOARD</strong>
-            <small>Scout prospects and make draft picks.</small>
-          </span>
-        </button>
-        <div className="office-left-extra">
-          <button onClick={() => onOpen('coaches')}>Coaches</button>
-          <button onClick={() => onOpen('standings')}>Standings</button>
-          <button onClick={() => onOpen('cap')}>Cap</button>
-          <button onClick={onTitle}>Title</button>
-        </div>
-      </aside>
-
       <aside className="office-right">
         <div className="office-team-card">
           <div className="office-team-head">
@@ -379,7 +336,14 @@ export function HeadOffice({
             <small>{formatCalendarLabel(cal, state.season)}</small>
             <strong>{cal.title}</strong>
           </div>
-          <button className={`office-play office-play-${primaryMode}`} onClick={runPrimary}>
+          <button type="button" className="office-menu-launch" onClick={() => setMenuOpen(true)}>
+            <IconMenu />
+            <span>
+              <strong>Menus</strong>
+              <small>Roster, FA, Draft, more</small>
+            </span>
+          </button>
+          <button type="button" className={`office-play office-play-${primaryMode}`} onClick={runPrimary}>
             <IconFootball />
             <span>
               <strong>{primaryLabel}</strong>
@@ -399,6 +363,8 @@ export function HeadOffice({
           </div>
         </div>
       </footer>
+
+      <GameMenu open={menuOpen} current="hub" onClose={() => setMenuOpen(false)} onNavigate={openMenuItem} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 type Modal = 'options' | 'stats' | 'hof' | 'credits' | 'settings' | null;
 
@@ -127,18 +127,6 @@ function Trophy() {
 export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
   const [activeMenu, setActiveMenu] = useState<(typeof MENU)[number]['id']>('new');
   const [modal, setModal] = useState<Modal>(null);
-  const [portrait, setPortrait] = useState(false);
-
-  useEffect(() => {
-    const check = () => setPortrait(window.matchMedia('(orientation: portrait)').matches);
-    check();
-    window.addEventListener('resize', check);
-    window.addEventListener('orientationchange', check);
-    return () => {
-      window.removeEventListener('resize', check);
-      window.removeEventListener('orientationchange', check);
-    };
-  }, []);
 
   const runMenu = (id: (typeof MENU)[number]['id']) => {
     setActiveMenu(id);
@@ -153,16 +141,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
 
   return (
     <div className="title-root">
-      {portrait && (
-        <div className="title-rotate-gate" role="dialog" aria-label="Rotate device">
-          <div className="title-rotate-card">
-            <div className="title-ufa-mark compact">UFA</div>
-            <h2>Rotate to Landscape</h2>
-            <p>Gridiron Dynasty is built for a wide stadium view. Turn your phone sideways to enter the league.</p>
-          </div>
-        </div>
-      )}
-
       <div className="title-stage">
         <div
           className="title-bg"
@@ -258,7 +236,7 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
             {modal === 'settings' && (
               <>
                 <h3>Settings</h3>
-                <p>Play in landscape for the full stadium title experience.</p>
+                <p>Built for phones and tablets — portrait works throughout the dynasty.</p>
                 <p>Progress autosaves in this browser after you take a GM job.</p>
                 <p>Free forever — built for franchise managers, not wallets.</p>
               </>
