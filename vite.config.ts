@@ -1,0 +1,16 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  // GitHub Pages serves from /gridiron-legacy/
+  base: process.env.GITHUB_PAGES === 'true' ? '/gridiron-legacy/' : '/',
+  preview: {
+    // Allow Cloudflare quick tunnels (and similar) during phone testing
+    allowedHosts: true,
+  },
+  server: {
+    allowedHosts: true,
+  },
+})

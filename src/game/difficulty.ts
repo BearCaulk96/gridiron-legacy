@@ -1,0 +1,88 @@
+import type { Difficulty, DifficultyConfig } from './types';
+
+export const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
+  casual: {
+    id: 'casual',
+    label: 'Casual',
+    tagline: 'Build freely. Win often.',
+    description:
+      'No salary cap limit, crystal-clear draft boards, generous trade partners, and a friendly sim. Stack the roster however you like.',
+    uncapped: true,
+    capSoftPercent: 99,
+    tradeGenerosity: 1.22,
+    simUserBoost: 8,
+    injuryRate: 0.035,
+    draftFog: 0,
+    freeScoutedProspects: 999,
+    showProspectOverall: true,
+    showProspectPotential: true,
+    showTraitGrades: true,
+    schemeMatter: 0.15,
+    aiTradeStrictness: 0.65,
+    developmentBonus: 1.35,
+  },
+  rookie: {
+    id: 'rookie',
+    label: 'Rookie',
+    tagline: 'Guided dynasty with real stakes.',
+    description:
+      'No salary cap limit while you learn. Draft trait grades replace raw ratings until you scout, and trades stay fair.',
+    uncapped: true,
+    capSoftPercent: 99,
+    tradeGenerosity: 1.08,
+    simUserBoost: 3,
+    injuryRate: 0.055,
+    draftFog: 0.25,
+    freeScoutedProspects: 40,
+    showProspectOverall: false,
+    showProspectPotential: true,
+    showTraitGrades: false,
+    schemeMatter: 0.35,
+    aiTradeStrictness: 0.85,
+    developmentBonus: 1.1,
+  },
+  pro: {
+    id: 'pro',
+    label: 'Pro',
+    tagline: 'Scheme, scouting, and cap discipline.',
+    description:
+      '$300M hard salary cap, foggy prospect boards until you scout traits, need-based trade AI, and scheme fit that swings games.',
+    uncapped: false,
+    capSoftPercent: 1.0,
+    tradeGenerosity: 0.98,
+    simUserBoost: 0,
+    injuryRate: 0.075,
+    draftFog: 0.55,
+    freeScoutedProspects: 12,
+    showProspectOverall: false,
+    showProspectPotential: false,
+    showTraitGrades: false,
+    schemeMatter: 0.7,
+    aiTradeStrictness: 1.05,
+    developmentBonus: 1.0,
+  },
+  veteran: {
+    id: 'veteran',
+    label: 'Veteran',
+    tagline: 'Every decision can make or break a dynasty.',
+    description:
+      '$300M hard cap, ruthless trade market, heavy draft uncertainty on traits, and coaching IQ deciding close games.',
+    uncapped: false,
+    capSoftPercent: 1.0,
+    tradeGenerosity: 0.9,
+    simUserBoost: -2,
+    injuryRate: 0.1,
+    draftFog: 0.8,
+    freeScoutedProspects: 4,
+    showProspectOverall: false,
+    showProspectPotential: false,
+    showTraitGrades: false,
+    schemeMatter: 1.0,
+    aiTradeStrictness: 1.25,
+    developmentBonus: 0.85,
+  },
+};
+
+export function getDifficulty(id: Difficulty): DifficultyConfig {
+  return DIFFICULTIES[id];
+}
