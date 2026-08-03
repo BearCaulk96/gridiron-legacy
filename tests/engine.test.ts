@@ -15,6 +15,8 @@ import { createLiveGame, stepUntilFinal } from '../src/game/playByPlay.ts';
 import { currentDraftPick, draftPlayer, prospects, runFullAiDraft } from '../src/game/draft.ts';
 import { evaluateTrade } from '../src/game/trade.ts';
 import { TEAM_TEMPLATES } from '../src/game/teams.ts';
+import { maxAllowedCap, rosterPlayers } from '../src/game/salary.ts';
+import { DIFFICULTIES } from '../src/game/difficulty.ts';
 import { teamCapHit } from '../src/game/salary.ts';
 
 describe('Gridiron Dynasty engine', () => {
@@ -148,5 +150,24 @@ describe('Gridiron Dynasty engine', () => {
     assert.equal(currentDraftPick(league), null);
     advanceCalendar(league);
     assert.equal(currentCalendar(league).kind, 'draftRecap');
+  });
+
+  it('uses 53-man rosters, $300M pro cap, and trait-based prospects', () => {
+    const pro = createLeague('kc', 'pro', 99);
+    const casual = createLeague('kc', 'casual', 99);
+    assert.equal(rosterPlayers(pro, 'kc').length, 53);
+    assert.equal(pro.salaryCap, 300_000_000);
+    assert.equal(DIFFICULTIES.pro.uncapped, false);
+    assert.equal(DIFFICULTIES.casual.uncapped, true);
+    assert.ok(maxAllowedCap(casual) > 1e12);
+    assert.equal(maxAllowedCap(pro), 300_000_000);
+
+    const board = prospects(pro);
+    assert.ok(board.length >= 200);
+    const withTraits = board.filter((p) => p.traits && Object.keys(p.traits).length >= 3);
+    assert.ok(withTraits.length > 100);
+    const gems = board.filter((p) => p.potential - p.overall >= 18);
+    assert.ok(gems.length >= 8, 'late-round style gems should exist');
+    assert.ok(teamCapHit(pro, 'kc') > 50_000_000);
   });
 });

@@ -1,9 +1,10 @@
 import { getDifficulty } from './difficulty';
 import { createRng, clamp } from './rng';
 import { positionalNeed } from './ratings';
-import { suggestedContract } from './salary';
+import { rosterOpenings, rookieScaleContract } from './salary';
 import type { DifficultyConfig, LeagueState, Player } from './types';
 import { playerName } from './generate';
+import { ensurePlayerTraits, ratingToGrade, traitEntries, type LetterGrade } from './traits';
 
 export function prospects(state: LeagueState): Player[] {
   return Object.values(state.players)
@@ -31,7 +32,23 @@ export function prospectGrade(state: LeagueState, p: Player): string {
   if (score >= 68) return 'B-';
   if (score >= 64) return 'C+';
   if (score >= 60) return 'C';
-  return 'C-';
+  if (score >= 55) return 'D';
+  return 'F';
+}
+
+/** Trait letter grades — visible when scouted or difficulty shows traits. */
+export function visibleTraitGrades(
+  state: LeagueState,
+  p: Player,
+): { key: string; grade: LetterGrade | '??' }[] {
+  const cfg = getDifficulty(state.difficulty);
+  ensurePlayerTraits(p);
+  const entries = traitEntries(p);
+  const reveal = cfg.showTraitGrades || !!p.scouted || !p.isProspect;
+  return entries.map((e) => ({
+    key: e.key,
+    grade: reveal ? e.grade : '??',
+  }));
 }
 
 export function visibleOverall(state: LeagueState, p: Player): number | null {
@@ -54,7 +71,11 @@ export function scoutPlayer(state: LeagueState, playerId: string): boolean {
   if (state.scoutingPoints <= 0) return false;
   state.scoutingPoints -= 1;
   p.scouted = true;
-  state.messages.unshift(`Scouted ${playerName(p)} — clearer read on traits.`);
+  ensurePlayerTraits(p);
+  const grades = traitEntries(p)
+    .map((t) => `${t.key} ${ratingToGrade(t.value)}`)
+    .join(', ');
+  state.messages.unshift(`Scouted ${playerName(p)} — ${grades}.`);
   return true;
 }
 
@@ -139,6 +160,7 @@ export function draftPlayer(state: LeagueState, playerId: string, teamId: string
   if (!pick || pick.teamId !== teamId) return false;
   const player = state.players[playerId];
   if (!player || !player.isProspect || player.teamId) return false;
+  if (rosterOpenings(state, teamId) <= 0) return false;
 
   player.teamId = teamId;
   player.isProspect = false;
@@ -146,14 +168,10 @@ export function draftPlayer(state: LeagueState, playerId: string, teamId: string
   player.draftRound = pick.round;
   player.draftPick = pick.overall;
   player.draftYear = state.season;
-  const years = pick.round <= 2 ? 4 : 3;
-  const c = suggestedContract(Math.min(player.overall, 78), player.age, years);
-  // Rookie scale discount
-  c.annualSalary = Math.round(c.annualSalary * (0.35 + (7 - pick.round) * 0.06));
-  player.contract = { ...c, yearsRemaining: years };
+  ensurePlayerTraits(player);
+  const c = rookieScaleContract(pick.overall, pick.round, player.position);
+  player.contract = { ...c, yearsRemaining: c.years };
 
-  // Consume the pick from owner's inventory for this year/round/original
-  // Find original team for this slot via standings order
   const team = state.teams.find((t) => t.id === teamId)!;
   const idx = team.draftPicks.findIndex(
     (pk) => pk.year === state.season && pk.round === pick.round && pk.ownerTeamId === teamId,
@@ -162,7 +180,7 @@ export function draftPlayer(state: LeagueState, playerId: string, teamId: string
 
   if (teamId === state.userTeamId) {
     state.messages.unshift(
-      `Drafted ${playerName(player)} (${player.position}) at pick ${pick.overall}.`,
+      `Drafted ${playerName(player)} (${player.position}) at pick ${pick.overall} — $${(c.annualSalary / 1e6).toFixed(2)}M/yr rookiedeal.`,
     );
   }
   return true;

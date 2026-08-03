@@ -6,7 +6,11 @@ import { positionalNeed } from './ratings';
 import {
   freeAgents,
   maxAllowedCap,
+  OFFSEASON_ROSTER_LIMIT,
   refreshTeamCapHits,
+  rosterOpenings,
+  rosterPlayers,
+  ROSTER_LIMIT,
   suggestedContract,
   teamCapHit,
   teamCapSpace,
@@ -24,6 +28,47 @@ import type { LiveGameState } from './playByPlay';
 
 export function startNewGame(userTeamId: string, difficulty: Difficulty): LeagueState {
   return createLeague(userTeamId, difficulty);
+}
+
+function enforceFiftyThree(state: LeagueState): void {
+  for (const team of state.teams) {
+    if (team.id === state.userTeamId) continue;
+    const roster = rosterPlayers(state, team.id);
+    if (roster.length <= ROSTER_LIMIT) continue;
+    const cut = roster.slice(ROSTER_LIMIT);
+    for (const p of cut) {
+      p.teamId = null;
+      p.contract = null;
+      p.morale = Math.max(35, p.morale - 10);
+    }
+  }
+  refreshTeamCapHits(state);
+}
+
+/** Dump a few fringe veterans / money holdouts onto the FA market each FA week. */
+function seedFreeAgencyMarket(state: LeagueState): void {
+  const rng = createRng(state.season * 91 + state.calendarIndex * 13);
+  let dumped = 0;
+  for (const team of state.teams) {
+    if (dumped >= 24) break;
+    const roster = rosterPlayers(state, team.id);
+    if (roster.length <= ROSTER_LIMIT - 2) continue;
+    const fringe = roster.filter((p) => p.overall < 72 && p.age >= 26).slice(-2);
+    for (const p of fringe) {
+      if (rng() > 0.45) continue;
+      p.teamId = null;
+      p.contract = null;
+      p.morale = Math.max(30, p.morale - 12);
+      dumped += 1;
+      if (dumped >= 24) break;
+    }
+  }
+  for (const p of freeAgents(state).slice(0, 30)) {
+    if (p.overall >= 80 && rng() < 0.3) {
+      p.morale = Math.max(40, p.morale - 6);
+    }
+  }
+  refreshTeamCapHits(state);
 }
 
 function syncFromCalendar(state: LeagueState): void {
@@ -137,6 +182,8 @@ function onEnterWeek(state: LeagueState): void {
     state.phase = 'draft';
     state.messages.unshift(`The ${state.season} Gridiron Draft is open.`);
     autoPickUntilUser(state);
+  } else if (slot.kind === 'freeAgency' || slot.kind === 'freeAgencyRecap') {
+    seedFreeAgencyMarket(state);
   } else if (slot.playoff) {
     ensurePlayoffRound(state, slot);
   } else if (slot.kind === 'regularSeason' && slot.seasonWeek === 1) {
@@ -214,9 +261,18 @@ function resolveNonGameWeek(state: LeagueState, slot: CalendarSlot): void {
         `${label}: Training camp focus — ${slot.detail ?? 'full squad'}.`,
       );
       break;
-    case 'finalizeRoster':
-      state.messages.unshift(`${label}: 53-man roster finalized and starters elected.`);
+    case 'finalizeRoster': {
+      enforceFiftyThree(state);
+      const userCount = rosterPlayers(state, state.userTeamId).length;
+      if (userCount > ROSTER_LIMIT) {
+        state.messages.unshift(
+          `${label}: You still have ${userCount} players — cut down to ${ROSTER_LIMIT} before kickoff.`,
+        );
+      } else {
+        state.messages.unshift(`${label}: 53-man roster locked league-wide.`);
+      }
       break;
+    }
     case 'hallOfFame': {
       const mvp = [...state.teams].sort((a, b) => b.pointsFor - a.pointsFor)[0]!;
       state.messages.unshift(
@@ -261,7 +317,8 @@ function resolveNonGameWeek(state: LeagueState, slot: CalendarSlot): void {
       state.messages.unshift(`${label}: Final contract decisions lock in before Free Agency.`);
       break;
     case 'freeAgency':
-      state.messages.unshift(`${label}: Free agency week continues.`);
+      seedFreeAgencyMarket(state);
+      state.messages.unshift(`${label}: Free agency week continues — unwanted and unsigned veterans hit the market.`);
       break;
     case 'scoutingReport':
     case 'scoutingReview':
@@ -520,11 +577,14 @@ export function signFreeAgent(state: LeagueState, playerId: string, years = 2): 
   const player = state.players[playerId];
   if (!player || player.teamId || player.isProspect) return 'Player unavailable.';
   if (state.phase !== 'freeAgency') return 'Free agency is not open this week.';
+  if (rosterOpenings(state, state.userTeamId) <= 0) {
+    return `Roster is full (${OFFSEASON_ROSTER_LIMIT}). Cut players before signing.`;
+  }
 
-  const contract = suggestedContract(player.overall, player.age, years);
+  const contract = suggestedContract(player.overall, player.age, years, player.position);
   const projected = teamCapHit(state, state.userTeamId) + contract.annualSalary;
   if (projected > maxAllowedCap(state)) {
-    return 'Signing would exceed the salary cap for this difficulty.';
+    return 'Signing would exceed the $300M salary cap for this difficulty.';
   }
 
   player.teamId = state.userTeamId;
@@ -550,23 +610,24 @@ export function releasePlayer(state: LeagueState, playerId: string): string | nu
 
 export function aiSignFreeAgents(state: LeagueState): void {
   const rng = createRng(state.season * 42 + 7);
-  const agents = freeAgents(state).filter((p) => p.overall >= 70);
+  const agents = freeAgents(state).filter((p) => p.overall >= 68);
   const teams = shuffle(
     rng,
     state.teams.filter((t) => t.id !== state.userTeamId),
   );
 
   for (const team of teams) {
+    if (rosterOpenings(state, team.id) <= 0) continue;
     if (teamCapSpace(state, team.id) < 2_000_000) continue;
     const needs = positionalNeed(state, team.id);
     const target = agents.find((p) => {
       if (p.teamId) return false;
       if (!needs.slice(0, 4).includes(p.position)) return false;
-      const sal = suggestedContract(p.overall, p.age).annualSalary;
+      const sal = suggestedContract(p.overall, p.age, 2, p.position).annualSalary;
       return teamCapHit(state, team.id) + sal <= maxAllowedCap(state);
     });
     if (!target) continue;
-    const c = suggestedContract(target.overall, target.age, 2);
+    const c = suggestedContract(target.overall, target.age, 2, target.position);
     target.teamId = team.id;
     target.contract = { ...c, yearsRemaining: 2 };
   }

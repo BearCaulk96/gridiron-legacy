@@ -569,6 +569,51 @@ a {
   color: var(--chalk-dim);
 }
 
+.draft-trait-grades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.draft-trait {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.4rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.draft-trait em {
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--chalk-dim);
+}
+
+.draft-trait b {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.draft-trait.tone-hot b {
+  color: var(--amber-hot);
+}
+
+.draft-trait.tone-good b {
+  color: #9ef0c2;
+}
+
+.draft-trait.tone-ok b {
+  color: var(--chalk-dim);
+}
+
 .draft-dock-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));

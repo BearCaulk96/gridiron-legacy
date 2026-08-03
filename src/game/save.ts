@@ -1,4 +1,7 @@
 import type { LeagueState } from './types';
+import { BASE_SALARY_CAP } from './salary';
+import { ensurePlayerTraits } from './traits';
+import { createRng } from './rng';
 
 const KEY = 'gridiron-legacy-save-v2';
 const LEGACY_KEYS = ['gridiron-legacy-save-v1'];
@@ -21,6 +24,13 @@ export function loadGame(): LeagueState | null {
     if (!sample || (sample.conference !== 'American' && sample.conference !== 'National') || !('accent' in sample)) {
       localStorage.removeItem(KEY);
       return null;
+    }
+    if (typeof data.salaryCap !== 'number' || data.salaryCap < BASE_SALARY_CAP) {
+      data.salaryCap = BASE_SALARY_CAP;
+    }
+    const rng = createRng(data.season * 17 + 3);
+    for (const p of Object.values(data.players ?? {})) {
+      ensurePlayerTraits(p, rng);
     }
     return data;
   } catch {

@@ -1,8 +1,9 @@
 import { COACH_FIRST, COACH_LAST, FIRST_NAMES, LAST_NAMES } from './names';
 import { createRng, pick, randInt, clamp, shuffle } from './rng';
 import { TEAM_TEMPLATES } from './teams';
-import { suggestedContract, BASE_SALARY_CAP, refreshTeamCapHits } from './salary';
+import { suggestedContract, BASE_SALARY_CAP, refreshTeamCapHits, ROSTER_LIMIT } from './salary';
 import { getDifficulty } from './difficulty';
+import { buildTraits, overallFromTraits, syncPhysicalFromTraits } from './traits';
 import type {
   Coach,
   Difficulty,
@@ -15,19 +16,23 @@ import type {
 } from './types';
 
 const POSITIONS: Position[] = ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'S', 'K', 'P'];
+
+/** Counts sum to 53 — NFL active roster shape. */
 const ROSTER_SHAPE: Record<Position, number> = {
-  QB: 2,
-  RB: 3,
-  WR: 5,
-  TE: 2,
-  OL: 7,
-  DL: 5,
-  LB: 5,
-  CB: 4,
-  S: 3,
+  QB: 3,
+  RB: 4,
+  WR: 6,
+  TE: 3,
+  OL: 9,
+  DL: 9,
+  LB: 7,
+  CB: 6,
+  S: 4,
   K: 1,
   P: 1,
 };
+
+export { ROSTER_LIMIT };
 
 let idCounter = 0;
 function nextId(prefix: string): string {
@@ -59,15 +64,17 @@ function makePlayer(
     potential?: number;
     teamId: string | null;
     isProspect?: boolean;
+    traits?: Record<string, number>;
   },
 ): Player {
-  const overall = opts.overall ?? randInt(rng, 58, 88);
+  const traits = opts.traits ?? buildTraits(opts.position, opts.overall ?? randInt(rng, 58, 88), rng);
+  const overall = opts.overall ?? overallFromTraits(traits);
   const potential = opts.potential ?? clamp(overall + randInt(rng, 0, 12), 60, 99);
   const age = opts.age ?? randInt(rng, 21, 32);
   const contract =
     opts.teamId && !opts.isProspect
       ? {
-          ...suggestedContract(overall, age, randInt(rng, 1, 4)),
+          ...suggestedContract(overall, age, randInt(rng, 1, 4), opts.position),
           yearsRemaining: randInt(rng, 1, 4),
         }
       : null;
@@ -76,7 +83,7 @@ function makePlayer(
     contract.years = Math.max(contract.years, contract.yearsRemaining);
   }
 
-  return {
+  const player: Player = {
     id: nextId('p'),
     firstName: pick(rng, FIRST_NAMES),
     lastName: pick(rng, LAST_NAMES),
@@ -84,6 +91,7 @@ function makePlayer(
     age,
     overall,
     potential,
+    traits,
     speed: clamp(overall + randInt(rng, -8, 8), 40, 99),
     strength: clamp(overall + randInt(rng, -8, 8), 40, 99),
     awareness: clamp(overall + randInt(rng, -10, 6), 40, 99),
@@ -97,6 +105,8 @@ function makePlayer(
     seasonsPlayed: Math.max(0, age - 21),
     stats: emptyStats(),
   };
+  syncPhysicalFromTraits(player);
+  return player;
 }
 
 function makeCoach(rng: () => number, teamId: string, role: Coach['role']): Coach {
@@ -188,14 +198,22 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
     }
   }
 
-  // Free agent pool
-  for (let i = 0; i < 80; i++) {
+  // Free agent pool — cut / unwanted / money-chasers before the draft
+  for (let i = 0; i < 120; i++) {
+    const overall = randInt(rng, 58, 88);
     const player = makePlayer(rng, {
       position: pick(rng, POSITIONS),
       teamId: null,
-      overall: randInt(rng, 58, 84),
+      overall,
       age: randInt(rng, 23, 34),
     });
+    // Some want starter money above their market (motivates FA shopping)
+    if (rng() < 0.35 && player.contract == null) {
+      const want = suggestedContract(Math.min(99, overall + 4), player.age, 3, player.position);
+      player.contract = null;
+      player.morale = clamp(player.morale - 8, 35, 99);
+      void want;
+    }
     players[player.id] = player;
   }
 
@@ -226,7 +244,10 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
     messages: [
       `Welcome to Gridiron Dynasty. You take the helm of the ${teams.find((t) => t.id === userTeamId)?.city} ${teams.find((t) => t.id === userTeamId)?.name}.`,
       `Difficulty: ${cfg.label}. ${cfg.tagline}`,
-      'The calendar opens in April — Free Agency Week 1.',
+      cfg.uncapped
+        ? 'Salary cap: uncapped on this difficulty — build the roster you want.'
+        : `Salary cap: $${(BASE_SALARY_CAP / 1e6).toFixed(0)}M hard ceiling.`,
+      'April Free Agency opens first — then May scouting and a 7-round draft full of late-round gems.',
       'No microtransactions. No pay-to-win. Pure football decisions.',
     ],
     scoutingPoints: difficulty === 'veteran' ? 6 : difficulty === 'pro' ? 10 : 18,
@@ -240,24 +261,67 @@ export function createLeague(userTeamId: string, difficulty: Difficulty, seed = 
   return state;
 }
 
+/**
+ * 7-round class (224). Talent is shuffled so elites aren't all "first round"
+ * and late rounds hide boom-or-bust gems that can become franchise pieces.
+ */
 export function generateDraftClass(rng: () => number, _season: number): Player[] {
   const classSize = 224; // 32 * 7
   const skillPositions = POSITIONS.filter((p) => p !== 'K' && p !== 'P');
+
+  // Talent pool by tier — then shuffle into draft order so board ≠ round purity
+  const targets: { overall: number; potential: number; gem?: boolean }[] = [];
+  for (let i = 0; i < 10; i++) {
+    const o = randInt(rng, 84, 93);
+    targets.push({ overall: o, potential: clamp(o + randInt(rng, 2, 10), 88, 99) });
+  }
+  for (let i = 0; i < 28; i++) {
+    const o = randInt(rng, 78, 86);
+    targets.push({ overall: o, potential: clamp(o + randInt(rng, -2, 12), 75, 97) });
+  }
+  for (let i = 0; i < 50; i++) {
+    const o = randInt(rng, 70, 80);
+    targets.push({ overall: o, potential: clamp(o + randInt(rng, -4, 14), 68, 96) });
+  }
+  // Depth + hidden gems (low current, high ceiling)
+  while (targets.length < classSize) {
+    const gem = rng() < 0.14;
+    if (gem) {
+      const o = randInt(rng, 58, 72);
+      targets.push({
+        overall: o,
+        potential: randInt(rng, 86, 99),
+        gem: true,
+      });
+    } else {
+      const o = randInt(rng, 55, 74);
+      targets.push({ overall: o, potential: clamp(o + randInt(rng, -3, 10), 58, 88) });
+    }
+  }
+
+  const shuffled = shuffle(rng, targets);
   const prospects: Player[] = [];
   for (let i = 0; i < classSize; i++) {
-    const elite = i < 12;
-    const overall = elite ? randInt(rng, 78, 90) : randInt(rng, 58, 82);
-    const boomBust = randInt(rng, -5, 14);
+    const slot = shuffled[i]!;
     let position: Position = pick(rng, skillPositions);
-    if (i % 40 === 0) position = 'K';
-    if (i % 40 === 1) position = 'P';
+    if (i % 48 === 0) position = 'K';
+    if (i % 48 === 1) position = 'P';
+    const traits = buildTraits(position, slot.overall, rng);
+    // Gems: one trait spikes toward potential
+    if (slot.gem) {
+      const keys = Object.keys(traits);
+      const spike = keys[randInt(rng, 0, keys.length - 1)]!;
+      traits[spike] = clamp(slot.potential - randInt(rng, 0, 6), 70, 99);
+    }
+    const overall = overallFromTraits(traits);
     const player = makePlayer(rng, {
       position,
       teamId: null,
       overall,
-      potential: clamp(overall + boomBust, 60, 99),
+      potential: slot.potential,
       age: randInt(rng, 20, 23),
       isProspect: true,
+      traits,
     });
     player.contract = null;
     prospects.push(player);

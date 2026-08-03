@@ -20,7 +20,8 @@ export function Cap({ state }: Props) {
   const cfg = DIFFICULTIES[state.difficulty];
   const used = teamCapHit(state, team.id);
   const max = maxAllowedCap(state);
-  const pct = Math.min(100, Math.round((used / max) * 100));
+  const uncapped = cfg.uncapped;
+  const pct = uncapped ? 0 : Math.min(100, Math.round((used / max) * 100));
   const players = rosterPlayers(state, team.id);
   const coaches = team.coachIds.map((id) => state.coaches[id]!);
 
@@ -31,10 +32,9 @@ export function Cap({ state }: Props) {
         BOOKS
       </h2>
       <p className="muted">
-        League cap {formatMoney(state.salaryCap)}
-        {cfg.capSoftPercent > 1
-          ? ` · soft ceiling ${formatMoney(max)} on ${cfg.label}`
-          : ' · hard ceiling — no pay-to-win unlocks, ever'}
+        {uncapped
+          ? 'No salary cap on Casual / Rookie — spend freely and stack the roster.'
+          : `Hard ceiling ${formatMoney(state.salaryCap)} on ${cfg.label}. NFL-style wages, no pay-to-win unlocks.`}
       </p>
 
       <div className="stat-pile" style={{ margin: '1rem 0' }}>
@@ -43,18 +43,27 @@ export function Cap({ state }: Props) {
           <span className="muted">Used</span>
         </div>
         <div>
-          <strong>{formatMoney(teamCapSpace(state, team.id))}</strong>
+          <strong>{uncapped ? 'Uncapped' : formatMoney(teamCapSpace(state, team.id))}</strong>
           <span className="muted">Space</span>
         </div>
         <div>
-          <strong>{pct}%</strong>
-          <span className="muted">Of limit</span>
+          <strong>
+            {players.length}/{53}
+          </strong>
+          <span className="muted">Roster</span>
         </div>
       </div>
 
-      <div className="cap-meter" style={{ marginBottom: '1.25rem' }}>
-        <span style={{ width: `${pct}%`, background: pct > 95 ? 'var(--danger)' : pct > 80 ? 'var(--amber)' : 'var(--ok)' }} />
-      </div>
+      {!uncapped && (
+        <div className="cap-meter" style={{ marginBottom: '1.25rem' }}>
+          <span
+            style={{
+              width: `${pct}%`,
+              background: pct > 95 ? 'var(--danger)' : pct > 80 ? 'var(--amber)' : 'var(--ok)',
+            }}
+          />
+        </div>
+      )}
 
       <h3>Top contracts</h3>
       <table className="data">

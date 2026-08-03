@@ -3,7 +3,7 @@ import type { LeagueState, Player, Position } from '../game/types';
 import { currentCalendar } from '../game/calendar';
 import { playerName } from '../game/generate';
 import { positionalNeed } from '../game/ratings';
-import { freeAgents, formatMoney, teamCapSpace } from '../game/salary';
+import { freeAgents, formatCapSpace, formatMoney } from '../game/salary';
 import { userTeam } from '../game/season';
 import {
   FA_POSITION_TABS,
@@ -91,7 +91,7 @@ function AttrBar({ label, value }: { label: string; value: number }) {
 export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
   const team = userTeam(state);
   const cal = currentCalendar(state);
-  const cap = teamCapSpace(state, team.id);
+  const capLabel = formatCapSpace(state, team.id);
   const needs = positionalNeed(state, team.id).slice(0, 4);
 
   const [posTab, setPosTab] = useState<Position | 'ALL' | 'DB'>('ALL');
@@ -156,7 +156,7 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
         <div className="fa-title-block">
           <h2>FREE AGENCY</h2>
           <p>
-            Week {faWeek}/4 · {agents.length} players · Cap {formatMoney(cap)}
+            Week {faWeek}/4 · {agents.length} players · Cap {capLabel}
           </p>
         </div>
         <button

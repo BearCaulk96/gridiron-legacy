@@ -12,7 +12,7 @@ export function Roster({ state, onRelease }: Props) {
 
   return (
     <section className="panel panel-pad anim-fade-up">
-      <div className="tag">Roster</div>
+      <div className="tag">Roster · {players.length}/53</div>
       <h2 style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.04em', fontSize: '2.4rem', margin: '0.2rem 0 1rem' }}>
         DEPTH CHART
       </h2>

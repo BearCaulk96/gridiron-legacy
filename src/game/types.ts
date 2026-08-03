@@ -45,6 +45,8 @@ export interface Player {
   age: number;
   overall: number;
   potential: number;
+  /** Position traits that determine overall (0–99). */
+  traits?: Record<string, number>;
   speed: number;
   strength: number;
   awareness: number;
@@ -147,6 +149,8 @@ export interface DifficultyConfig {
   label: string;
   tagline: string;
   description: string;
+  /** When true, salary cap is not enforced (Casual / Rookie). */
+  uncapped: boolean;
   capSoftPercent: number;
   tradeGenerosity: number;
   simUserBoost: number;
@@ -155,6 +159,8 @@ export interface DifficultyConfig {
   freeScoutedProspects: number;
   showProspectOverall: boolean;
   showProspectPotential: boolean;
+  /** When true, trait letter grades are visible without scouting. */
+  showTraitGrades: boolean;
   schemeMatter: number;
   aiTradeStrictness: number;
   developmentBonus: number;

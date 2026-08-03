@@ -9,7 +9,7 @@ import {
 } from '../game/calendar';
 import { getOfficeTheme } from '../game/officeThemes';
 import { teamPower } from '../game/ratings';
-import { formatMoney, rosterPlayers, teamCapSpace } from '../game/salary';
+import { formatCapSpace, rosterPlayers } from '../game/salary';
 import { isDraftInProgress } from '../game/draft';
 import { standings, userGameThisWeek, userTeam } from '../game/season';
 import { TeamLogo } from './TeamLogo';
@@ -123,7 +123,7 @@ export function HeadOffice({
   const team = userTeam(state);
   const theme = getOfficeTheme(team);
   const power = Math.round(teamPower(state, team.id));
-  const cap = teamCapSpace(state, team.id);
+  const capLabel = formatCapSpace(state, team.id);
   const fanApproval = Math.round(
     rosterPlayers(state, team.id).reduce((s, p) => s + p.morale, 0) /
       Math.max(1, rosterPlayers(state, team.id).length),
@@ -321,7 +321,7 @@ export function HeadOffice({
             <li>
               <span>OVR / Cap</span>
               <strong>
-                {power} · {formatMoney(cap)}
+                {power} · {capLabel}
               </strong>
             </li>
             <li>

@@ -6,6 +6,7 @@ import {
   prospects,
   visibleOverall,
   visiblePotential,
+  visibleTraitGrades,
 } from '../game/draft';
 import { getDifficulty } from '../game/difficulty';
 import { playerName } from '../game/generate';
@@ -75,6 +76,7 @@ export function Draft({
   const selectedOvr = selected ? visibleOverall(state, selected) : null;
   const selectedPot = selected ? visiblePotential(state, selected) : null;
   const selectedGrade = selected ? prospectGrade(state, selected) : null;
+  const selectedTraits = selected ? visibleTraitGrades(state, selected) : [];
 
   if (state.phase !== 'draft' && state.phase !== 'scouting') {
     return (
@@ -229,9 +231,17 @@ export function Draft({
                   <div>
                     <strong>{playerName(selected)}</strong>
                     <span>
-                      {selected.position} · Grade {selectedGrade} · OVR {selectedOvr ?? '??'} · POT{' '}
+                      {selected.position} · Board {selectedGrade} · OVR {selectedOvr ?? '??'} · POT{' '}
                       {selectedPot ?? '??'}
                     </span>
+                  </div>
+                  <div className="draft-trait-grades" aria-label="Position traits">
+                    {selectedTraits.map((t) => (
+                      <span key={t.key} className={`draft-trait tone-${gradeTone(String(t.grade))}`}>
+                        <em>{t.key}</em>
+                        <b>{t.grade}</b>
+                      </span>
+                    ))}
                   </div>
                 </div>
                 <div className="draft-dock-actions">
@@ -242,13 +252,11 @@ export function Draft({
                       onClick={() => onScout(selected.id)}
                       disabled={state.scoutingPoints <= 0}
                     >
-                      Scout
+                      Scout Traits
                     </button>
                   )}
                   {scoutingOnly ? (
-                    selected.scouted && (
-                      <span className="draft-dock-note">Scouted</span>
-                    )
+                    selected.scouted && <span className="draft-dock-note">Traits revealed</span>
                   ) : (
                     <button
                       type="button"
@@ -267,7 +275,7 @@ export function Draft({
                 </div>
               </>
             ) : (
-              <p className="draft-dock-note">Tap a prospect to scout or draft.</p>
+              <p className="draft-dock-note">Tap a prospect to scout traits or draft.</p>
             )}
           </footer>
         </>
