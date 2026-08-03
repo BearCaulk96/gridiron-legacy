@@ -265,14 +265,14 @@ export function HeadOffice({
               </small>
               {game && opp ? (
                 <div className="office-sched-match">
-                  <TeamLogo team={team} size={28} />
+                  <TeamLogo team={team} size={20} />
                   <div>
                     <strong>
                       {vsLabel(game, team.id)} {opp.abbrev}
                     </strong>
                     <span>{game.played ? resultLabel(game, team.id) : slot.shortTitle}</span>
                   </div>
-                  <TeamLogo team={opp} size={28} />
+                  <TeamLogo team={opp} size={20} />
                 </div>
               ) : (
                 <div className="office-sched-match office-sched-event">
