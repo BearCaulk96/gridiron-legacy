@@ -2353,31 +2353,35 @@ table.data tr:hover td {
 
 .gameday-ball.fly-idle {
   animation: gameday-ball-pulse 1.2s ease-in-out infinite;
-  transition: left 0.35s ease, top 0.35s ease;
+  transition: left 0.45s ease, top 0.45s ease;
 }
 
 .gameday-ball.fly-pass {
-  animation: ball-fly-pass 1.15s cubic-bezier(0.28, 0.15, 0.35, 1) forwards;
+  animation: ball-fly-pass 2.4s cubic-bezier(0.28, 0.12, 0.32, 1) forwards;
+}
+
+.gameday-ball.fly-pass-deep {
+  animation: ball-fly-pass-deep 3.1s cubic-bezier(0.25, 0.1, 0.3, 1) forwards;
 }
 
 .gameday-ball.fly-run {
-  animation: ball-fly-run 1.15s cubic-bezier(0.33, 0.2, 0.3, 1) forwards;
+  animation: ball-fly-run 2.3s cubic-bezier(0.33, 0.15, 0.28, 1) forwards;
 }
 
 .gameday-ball.fly-kick-good {
-  animation: ball-fly-kick-good 1.25s cubic-bezier(0.2, 0.55, 0.3, 1) forwards;
+  animation: ball-fly-kick-good 2.5s cubic-bezier(0.2, 0.55, 0.3, 1) forwards;
 }
 
 .gameday-ball.fly-kick-miss {
-  animation: ball-fly-kick-miss 1.2s cubic-bezier(0.25, 0.4, 0.4, 1) forwards;
+  animation: ball-fly-kick-miss 2.3s cubic-bezier(0.25, 0.4, 0.4, 1) forwards;
 }
 
 .gameday-ball.fly-punt {
-  animation: ball-fly-punt 1.15s cubic-bezier(0.25, 0.4, 0.35, 1) forwards;
+  animation: ball-fly-punt 2.5s cubic-bezier(0.25, 0.4, 0.35, 1) forwards;
 }
 
 .gameday-ball.fly-sack {
-  animation: ball-fly-sack 0.85s ease-in-out forwards;
+  animation: ball-fly-sack 1.6s ease-in-out forwards;
 }
 
 @keyframes gameday-ball-pulse {
@@ -2390,37 +2394,58 @@ table.data tr:hover td {
   }
 }
 
-/* QB holds, then throws on an arc to the receiver */
+/* Hold at QB while routes develop, then throw to the receiver */
 @keyframes ball-fly-pass {
   0% {
     left: var(--ball-from);
     top: var(--ball-from-y);
     transform: translate(-50%, -50%) rotate(-8deg) scale(1);
   }
-  18% {
+  28% {
     left: var(--ball-from);
     top: var(--ball-from-y);
     transform: translate(-50%, -50%) rotate(-18deg) scale(1.02);
   }
-  55% {
-    top: calc(var(--ball-to-y) * 0.35);
-    transform: translate(-50%, -50%) rotate(140deg) scale(1.12);
+  62% {
+    top: calc(var(--ball-to-y) * 0.28);
+    transform: translate(-50%, -50%) rotate(150deg) scale(1.12);
   }
   100% {
     left: var(--ball-to);
     top: var(--ball-to-y);
-    transform: translate(-50%, -50%) rotate(280deg) scale(1);
+    transform: translate(-50%, -50%) rotate(300deg) scale(1);
   }
 }
 
-/* Handoff, then runner carries the ball downfield */
+@keyframes ball-fly-pass-deep {
+  0% {
+    left: var(--ball-from);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(-10deg) scale(1);
+  }
+  32% {
+    left: var(--ball-from);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(-22deg) scale(1.02);
+  }
+  58% {
+    top: 8%;
+    transform: translate(-50%, -50%) rotate(160deg) scale(1.18);
+  }
+  100% {
+    left: var(--ball-to);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(340deg) scale(1);
+  }
+}
+
 @keyframes ball-fly-run {
   0% {
     left: var(--ball-from);
     top: var(--ball-from-y);
     transform: translate(-50%, -50%) rotate(0deg) scale(0.95);
   }
-  16% {
+  18% {
     left: var(--ball-hand-x);
     top: var(--ball-hand-y);
     transform: translate(-50%, -50%) rotate(20deg) scale(1);
@@ -2432,7 +2457,6 @@ table.data tr:hover td {
   }
 }
 
-/* Kick rises and threads the uprights */
 @keyframes ball-fly-kick-good {
   0% {
     left: var(--ball-from);
@@ -2506,38 +2530,56 @@ table.data tr:hover td {
   position: absolute;
   transform: translate(-50%, -50%);
   font-family: var(--font-display);
-  font-size: clamp(0.85rem, 2vw, 1.2rem);
+  font-size: clamp(0.9rem, 2.1vw, 1.25rem);
+  font-weight: 700;
   line-height: 1;
   z-index: 4;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.55);
   text-shadow:
-    0 0 3px rgba(0, 0, 0, 0.75),
-    0 1px 2px rgba(0, 0, 0, 0.55);
+    0 0 4px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.4);
   will-change: left, top;
 }
 
 .gameday-field.pulse-a .gameday-marker,
 .gameday-field.pulse-b .gameday-marker {
-  transition: left 1.05s cubic-bezier(0.22, 0.61, 0.36, 1), top 1.05s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition:
+    left 2.1s cubic-bezier(0.22, 0.55, 0.32, 1),
+    top 2.1s cubic-bezier(0.22, 0.55, 0.32, 1);
+}
+
+.gameday-field.pulse-a .gameday-marker.role-skill,
+.gameday-field.pulse-b .gameday-marker.role-skill {
+  transition:
+    left 2.35s cubic-bezier(0.18, 0.6, 0.28, 1),
+    top 2.35s cubic-bezier(0.18, 0.6, 0.28, 1);
+}
+
+.gameday-field.pulse-a .gameday-marker.role-line,
+.gameday-field.pulse-b .gameday-marker.role-line {
+  transition:
+    left 1.55s cubic-bezier(0.3, 0.5, 0.4, 1),
+    top 1.55s cubic-bezier(0.3, 0.5, 0.4, 1);
 }
 
 .gameday-marker.kind-O {
-  color: #fffef6;
+  color: var(--off-primary, #fffef6);
 }
 
 .gameday-marker.kind-X {
-  color: #111;
+  color: var(--def-primary, #111);
 }
 
-.gameday-marker.is-carrier {
-  color: #ffe566;
-  font-size: 1.2em;
+.gameday-marker.is-carrier,
+.gameday-marker.is-target {
   z-index: 5;
-  filter: drop-shadow(0 0 4px rgba(255, 220, 80, 0.65));
+  font-size: 1.25em;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--off-primary) 70%, white));
 }
 
 .gameday-marker.is-qb {
   z-index: 5;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.45));
 }
 
 .gameday-board {

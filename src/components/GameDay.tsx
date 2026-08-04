@@ -58,6 +58,11 @@ interface FieldFx {
   handoffX: number;
   handoffY: number;
   made: boolean;
+  /** Possession side when the play snapped (for O/X team colors). */
+  offenseSide: 'home' | 'away';
+  /** How long this play should be enjoyed before the next one. */
+  durationMs: number;
+  deep: boolean;
 }
 
 /** Map 0–100 yard line onto the playable grid (goal line to goal line). */
@@ -375,6 +380,8 @@ function preSnapOffense(formation: FormationId, dir: 1 | -1): { spots: Spot[]; r
 
 /**
  * Develop the play from pre-snap: QB throw, RB run, routes, kick.
+ * Pass routes are scaled to the actual throw depth so a receiver is
+ * always at the catch point when the ball arrives.
  */
 function playSpots(
   formation: FormationId,
@@ -389,70 +396,88 @@ function playSpots(
   let defense = defenseBase(dir, kind === 'pass' || kind === 'sack' ? 'nickel' : 'odd');
 
   const qbIdx = roles.findIndex((r) => r === 'qb' || r === 'k' || r === 'p');
-  const rbIdx = Math.max(
-    0,
-    roles.findIndex((r) => r === 'rb' || r === 'fb'),
-  );
+  const rbIdx = roles.findIndex((r) => r === 'rb' || r === 'fb');
   const wrIdxs = roles
     .map((r, i) => (r === 'wr' || r === 'te' ? i : -1))
     .filter((i) => i >= 0);
 
-  let qb: Spot = offense[qbIdx >= 0 ? qbIdx : 0] ?? [ -dir * 3, 50 ];
+  let qb: Spot = offense[qbIdx >= 0 ? qbIdx : 0] ?? [-dir * 3, 50];
   let target: Spot = [dir * 8, 40];
   let handoff: Spot = qb;
 
   if (kind === 'pass' || kind === 'sack') {
-    // QB drop
     const drop = kind === 'sack' ? 3.2 : 5.2;
-    qb = [ -dir * drop, 48 + (seed % 5) ];
+    qb = [-dir * drop, 48 + (seed % 5)];
     if (qbIdx >= 0) offense[qbIdx] = qb;
 
-    const routeY = [16, 24, 78, 50, 86];
-    const routeX = [7, 11, 9, 14, 6];
-    wrIdxs.forEach((idx, i) => {
-      offense[idx] = [dir * routeX[i % routeX.length]!, routeY[i % routeY.length]!];
-    });
-    if (rbIdx >= 0 && roles[rbIdx] === 'rb') {
-      offense[rbIdx] = [ -dir * 2.5, 60 ];
+    const depth = Math.max(6, Math.abs(yards) || 12);
+    const catchY = [18, 26, 74, 50, 84, 22, 78][seed % 7]!;
+    const catchIdx = wrIdxs.length ? wrIdxs[seed % wrIdxs.length]! : -1;
+
+    // Primary receiver runs TO the catch depth (fixes empty deep balls)
+    if (catchIdx >= 0) {
+      offense[catchIdx] = [dir * depth, catchY];
+      target = offense[catchIdx]!;
+    } else {
+      target = [dir * depth, catchY];
     }
 
-    const catchIdx = wrIdxs[seed % Math.max(1, wrIdxs.length)] ?? 0;
-    target = offense[catchIdx] ?? [dir * Math.max(8, Math.abs(yards) || 12), 30];
+    // Other receivers run complementary routes at varied depths
+    wrIdxs.forEach((idx, i) => {
+      if (idx === catchIdx) return;
+      const altDepth = clamp(depth * (0.35 + (i % 3) * 0.2), 5, Math.max(8, depth - 3));
+      const altY = catchY < 50 ? 70 + (i % 3) * 6 : 18 + (i % 3) * 6;
+      offense[idx] = [dir * altDepth, clamp(altY, 12, 88)];
+    });
+
+    if (rbIdx >= 0 && roles[rbIdx] === 'rb') {
+      offense[rbIdx] = [-dir * 2.2, 62];
+    }
+
     if (kind === 'sack') {
       target = qb;
       defense[1] = [qb[0] + dir * 0.8, qb[1]];
+    } else {
+      // Coverage trails the throw
+      defense = defense.map((s, i) => {
+        if (i >= 8) {
+          return [
+            dir * (depth - 2 + (i - 8) * 1.5),
+            clamp(catchY + (i === 8 ? -6 : i === 9 ? 0 : 6), 14, 86),
+          ];
+        }
+        if (i >= 5) return [s[0] + dir * (depth * 0.35), s[1]];
+        return [s[0] + dir * 1.4, s[1]];
+      }) as Spot[];
     }
-    defense = defense.map((s, i) =>
-      i < 3 ? [s[0] + dir * 1.2, s[1]] : [s[0] + dir * 2.5, s[1]],
-    ) as Spot[];
   } else if (kind === 'run') {
     const laneY = [42, 48, 54, 38, 58][seed % 5]!;
     const gain = Math.max(2, Math.abs(yards) || 4);
-    handoff = [ -dir * 1.2, laneY ];
-    qb = [ -dir * 2.0, 50 ];
+    handoff = [-dir * 1.2, laneY];
+    qb = [-dir * 2.0, 50];
     if (qbIdx >= 0) offense[qbIdx] = qb;
-    // OL fire off
     for (let i = 1; i <= 5; i++) {
-      if (offense[i]) offense[i] = [dir * 1.6, offense[i]![1]];
+      if (offense[i]) offense[i] = [dir * 1.8, offense[i]![1]];
     }
     target = [dir * gain, laneY];
     if (rbIdx >= 0) offense[rbIdx] = target;
-    // lead blockers / WR block
     wrIdxs.forEach((idx, i) => {
-      offense[idx] = [dir * (2 + i), offense[idx]![1] < 50 ? 20 : 80];
+      offense[idx] = [dir * (2.5 + i * 1.2), offense[idx]![1] < 50 ? 18 : 82];
     });
     defense = defense.map((s, i) =>
-      i < 4 ? [s[0] - dir * 0.8, s[1] + (i - 2) * 2] : [s[0] + dir * 1.5, s[1]],
+      i < 4
+        ? [s[0] - dir * 0.6, clamp(laneY + (i - 1.5) * 5, 20, 80)]
+        : [s[0] + dir * Math.min(gain * 0.6, 6), s[1]],
     ) as Spot[];
   } else if (kind === 'fieldGoal' || kind === 'extraPoint') {
-    qb = [ -dir * 8.0, 50 ]; // kicker
-    handoff = [ -dir * 6.2, 50 ]; // holder / ball spot
+    qb = [-dir * 8.0, 50];
+    handoff = [-dir * 6.2, 50];
     target = [dir * 40, 50];
     if (qbIdx >= 0) offense[qbIdx] = qb;
     const hIdx = roles.findIndex((r) => r === 'h');
     if (hIdx >= 0) offense[hIdx] = handoff;
   } else if (kind === 'punt' || kind === 'kickoff') {
-    qb = offense[0] ?? [ -dir * 7, 50 ];
+    qb = offense[0] ?? [-dir * 7, 50];
     target = [dir * Math.max(20, Math.abs(yards) || 40), 50];
     handoff = qb;
   } else {
@@ -467,10 +492,10 @@ function formationMarkers(live: LiveGameState, fx: FieldFx): Marker[] {
   const los = yardToLeft(fx.kind === 'idle' ? live.ballOn : fx.los);
   const dir = fx.dir;
   const developed = fx.kind !== 'idle';
-  const yards = developed ? fx.to - fx.from : 0;
+  const yards = developed ? Math.abs(fx.to - fx.from) : 0;
 
   const pack = developed
-    ? playSpots(fx.formation, fx.kind, dir, yards * dir, fx.key)
+    ? playSpots(fx.formation, fx.kind, dir, Math.max(yards, 6), fx.key)
     : (() => {
         const pre = preSnapOffense(fx.formation, dir);
         return {
@@ -486,12 +511,18 @@ function formationMarkers(live: LiveGameState, fx: FieldFx): Marker[] {
   const clampX = (x: number) => clamp(x, 2, 98);
   const markers: Marker[] = [];
   pack.offense.forEach(([dx, y], i) => {
+    const role = pack.roles[i];
+    const isTarget =
+      developed &&
+      fx.kind === 'pass' &&
+      (role === 'wr' || role === 'te') &&
+      Math.abs(los + dx - yardToLeft(fx.to)) < 1.5;
     markers.push({
       id: `o${i}`,
       kind: 'O',
       x: clampX(los + dx),
       y,
-      role: pack.roles[i],
+      role: isTarget ? 'target' : role,
     });
   });
   pack.defense.forEach(([dx, y], i) => {
@@ -552,13 +583,23 @@ function BoxTable({
   );
 }
 
-function ballClass(kind: PlayKind | 'idle', made: boolean): string {
-  if (kind === 'pass') return 'fly-pass';
+function ballClass(kind: PlayKind | 'idle', made: boolean, deep: boolean): string {
+  if (kind === 'pass') return deep ? 'fly-pass-deep' : 'fly-pass';
   if (kind === 'fieldGoal' || kind === 'extraPoint') return made ? 'fly-kick-good' : 'fly-kick-miss';
   if (kind === 'punt' || kind === 'kickoff') return 'fly-punt';
   if (kind === 'run') return 'fly-run';
   if (kind === 'sack') return 'fly-sack';
   return 'fly-idle';
+}
+
+function playDurationMs(kind: PlayKind | 'idle', yards: number, deep: boolean): number {
+  if (kind === 'idle') return 900;
+  if (kind === 'pass') return deep ? 4200 : 3400;
+  if (kind === 'run') return Math.abs(yards) > 12 ? 3800 : 3200;
+  if (kind === 'fieldGoal' || kind === 'extraPoint') return 3600;
+  if (kind === 'punt' || kind === 'kickoff') return 3800;
+  if (kind === 'sack') return 2800;
+  return 3000;
 }
 
 function buildFx(
@@ -574,8 +615,16 @@ function buildFx(
   const made = Boolean(next.lastPlay?.scoreKind === 'fg' || next.lastPlay?.scoreKind === 'xp');
   const formation = pickFormation(prev, kind, key + prev.down * 3 + prev.distance);
   const yards = next.lastPlay?.yards ?? 0;
+  const incomplete = kind === 'pass' && Math.abs(yards) < 1 && !next.lastPlay?.turnover;
+  const throwDepth =
+    kind === 'pass'
+      ? incomplete
+        ? 10 + (key % 10)
+        : Math.max(6, Math.abs(yards))
+      : Math.abs(yards);
+  const deep = kind === 'pass' && throwDepth >= 18;
 
-  const pack = playSpots(formation, kind, dir, yards, key);
+  const pack = playSpots(formation, kind, dir, kind === 'pass' ? throwDepth : yards, key);
   const losPitch = yardToPitch(los);
 
   let ballFromX = losPitch;
@@ -588,10 +637,9 @@ function buildFx(
   if (kind === 'pass') {
     ballFromX = yardToPitch(clamp(los + pack.qb[0], 0, 100));
     ballFromY = pack.qb[1];
-    const incomplete = Math.abs(yards) < 1 && !next.lastPlay?.turnover;
-    ballToX = incomplete
-      ? yardToPitch(clamp(los + dir * (10 + (key % 8)), 0, 100))
-      : yardToPitch(next.ballOn);
+    // Ball meets the receiver at the same spot players run to
+    const catchYard = clamp(los + dir * throwDepth, 0, 100);
+    ballToX = yardToPitch(catchYard);
     ballToY = pack.target[1];
     handoffX = ballFromX;
     handoffY = ballFromY;
@@ -607,7 +655,6 @@ function buildFx(
     ballFromY = 50;
     handoffX = ballFromX;
     handoffY = 50;
-    // Through the uprights (past end zone into post column)
     if (dir === 1) {
       ballToX = made ? 102.5 : 96;
       ballToY = made ? 28 : 12;
@@ -635,7 +682,7 @@ function buildFx(
     key,
     kind,
     from,
-    to: next.ballOn,
+    to: kind === 'pass' ? clamp(los + dir * throwDepth, 0, 100) : next.ballOn,
     los,
     firstDown,
     dir,
@@ -647,6 +694,9 @@ function buildFx(
     handoffX,
     handoffY,
     made,
+    offenseSide: prev.possession,
+    durationMs: playDurationMs(kind, yards, deep),
+    deep,
   };
 }
 
@@ -674,6 +724,9 @@ export function GameDay({ state, onFinish, onBack }: Props) {
     handoffX: yardToPitch(25),
     handoffY: 50,
     made: false,
+    offenseSide: 'home',
+    durationMs: 900,
+    deep: false,
   }));
 
   const home = state.teams.find((t) => t.id === live?.homeId);
@@ -688,9 +741,11 @@ export function GameDay({ state, onFinish, onBack }: Props) {
     return next;
   };
 
+  // Watch mode: wait for each play to finish before snapping the next
   useEffect(() => {
     if (!watching) return;
-    const id = window.setInterval(() => {
+    const delay = fx.kind === 'idle' ? 700 : fx.durationMs;
+    const id = window.setTimeout(() => {
       setLive((prev) => {
         if (!prev || prev.phase === 'final') {
           setWatching(false);
@@ -700,13 +755,16 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         if (next.phase === 'final') setWatching(false);
         return next;
       });
-    }, 1400);
-    return () => window.clearInterval(id);
-  }, [watching, state]);
+    }, delay);
+    return () => window.clearTimeout(id);
+    // Only re-arm when a new play starts (or watch toggles) — not on settle-to-idle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watching, fx.key, state]);
 
-  // Settle back to idle markers after the flight finishes
+  // Settle back to idle markers after the play animation finishes
   useEffect(() => {
     if (!live || fx.kind === 'idle') return;
+    const settleAt = Math.max(2200, fx.durationMs - 900);
     const t = window.setTimeout(() => {
       const formation = pickFormation(live, 'idle', fx.key + 11);
       setFx((prev) => ({
@@ -725,8 +783,11 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         handoffX: yardToPitch(live.ballOn),
         handoffY: 50,
         made: false,
+        offenseSide: live.possession,
+        durationMs: 900,
+        deep: false,
       }));
-    }, 1200);
+    }, settleAt);
     return () => window.clearTimeout(t);
   }, [fx.key, live]);
 
@@ -787,6 +848,9 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         handoffX: yardToPitch(next.ballOn),
         handoffY: 50,
         made: false,
+        offenseSide: next.possession,
+        durationMs: 900,
+        deep: false,
       });
       setPulse((p) => p + 1);
       return next;
@@ -840,6 +904,9 @@ export function GameDay({ state, onFinish, onBack }: Props) {
     );
   }
 
+  const offenseTeam = fx.offenseSide === 'home' ? home : away;
+  const defenseTeam = fx.offenseSide === 'home' ? away : home;
+
   const ballStyle = {
     '--ball-from': `${fx.ballFromX}%`,
     '--ball-to': `${fx.ballToX}%`,
@@ -859,6 +926,8 @@ export function GameDay({ state, onFinish, onBack }: Props) {
           '--home-accent': home.accent,
           '--away-primary': away.primary,
           '--away-secondary': away.secondary,
+          '--off-primary': offenseTeam.primary,
+          '--def-primary': defenseTeam.primary,
         } as CSSProperties
       }
     >
@@ -926,7 +995,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
               {markers.map((m) => (
                 <span
                   key={m.id}
-                  className={`gameday-marker kind-${m.kind}${m.role === 'rb' && fx.kind === 'run' ? ' is-carrier' : ''}${m.role === 'qb' && (fx.kind === 'pass' || fx.kind === 'sack') ? ' is-qb' : ''}`}
+                  className={`gameday-marker kind-${m.kind}${m.role === 'rb' && fx.kind === 'run' ? ' is-carrier' : ''}${m.role === 'qb' && (fx.kind === 'pass' || fx.kind === 'sack') ? ' is-qb' : ''}${m.role === 'target' ? ' is-target' : ''}${m.role === 'wr' || m.role === 'te' || m.role === 'target' ? ' role-skill' : ''}${m.role === 'ol' || m.role === 'h' ? ' role-line' : ''}`}
                   style={{ left: `${m.x}%`, top: `${m.y}%` }}
                   data-role={m.role}
                 >
@@ -942,7 +1011,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
 
             <div
               key={`ball-${fx.key}-${fx.kind}`}
-              className={`gameday-ball ${ballClass(fx.kind, fx.made)}`}
+              className={`gameday-ball ${ballClass(fx.kind, fx.made, fx.deep)}`}
               style={ballStyle}
               aria-hidden
             >
