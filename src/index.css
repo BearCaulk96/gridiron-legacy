@@ -2058,10 +2058,9 @@ table.data tr:hover td {
   --turf-b: #167540;
   --turf-line: rgba(255, 255, 255, 0.92);
   --turf-line-soft: rgba(255, 255, 255, 0.55);
-  width: min(100%, calc(min(46vh, 360px) * 2.25));
-  margin-inline: auto;
-  aspect-ratio: 120 / 53.3;
-  max-height: min(46vh, 360px);
+  width: 100%;
+  height: min(42vh, 320px);
+  min-height: min(42vh, 320px);
   position: relative;
   flex-shrink: 0;
 }
@@ -2663,7 +2662,8 @@ table.data tr:hover td {
 @media (max-width: 700px) {
   .gameday-field {
     width: 100%;
-    max-height: min(38vh, 260px);
+    height: min(42vh, 280px);
+    min-height: 220px;
   }
 
   .gameday-field-shell {
