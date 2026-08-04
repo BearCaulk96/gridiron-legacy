@@ -38,9 +38,22 @@ interface FieldFx {
   dir: 1 | -1;
 }
 
+/** Map 0–100 yard line onto the playable grid (goal line to goal line). */
 function yardToLeft(yard: number): number {
-  return 12 + (Math.min(100, Math.max(0, yard)) / 100) * 76;
+  return Math.min(100, Math.max(0, yard));
 }
+
+const YARD_NUMBERS = [
+  { n: 10, at: 10 },
+  { n: 20, at: 20 },
+  { n: 30, at: 30 },
+  { n: 40, at: 40 },
+  { n: 50, at: 50 },
+  { n: 40, at: 60 },
+  { n: 30, at: 70 },
+  { n: 20, at: 80 },
+  { n: 10, at: 90 },
+] as const;
 
 function firstDownYard(live: LiveGameState): number {
   if (live.possession === 'home') return Math.min(100, live.ballOn + live.distance);
@@ -49,15 +62,11 @@ function firstDownYard(live: LiveGameState): number {
 
 function GoalPosts({ side }: { side: 'left' | 'right' }) {
   return (
-    <svg
-      className={`gameday-posts ${side}`}
-      viewBox="0 0 40 80"
-      aria-hidden
-    >
-      <rect x="18" y="48" width="4" height="28" fill="#c0c0c0" />
-      <rect x="4" y="46" width="32" height="3.5" fill="#e8e8e8" />
-      <rect x="4" y="8" width="3.5" height="40" fill="#f0f0f0" />
-      <rect x="32.5" y="8" width="3.5" height="40" fill="#f0f0f0" />
+    <svg className={`gameday-posts ${side}`} viewBox="0 0 48 100" aria-hidden>
+      <rect x="22" y="62" width="4" height="34" fill="#f5c518" />
+      <rect x="6" y="58" width="36" height="4.5" rx="1" fill="#ffd84d" />
+      <rect x="6" y="10" width="4" height="50" rx="1" fill="#ffd84d" />
+      <rect x="38" y="10" width="4" height="50" rx="1" fill="#ffd84d" />
     </svg>
   );
 }
@@ -216,7 +225,7 @@ function formationMarkers(live: LiveGameState, fx: FieldFx): Marker[] {
     ];
   }
 
-  const clampX = (x: number) => Math.min(94, Math.max(6, x));
+  const clampX = (x: number) => Math.min(98, Math.max(2, x));
   const markers: Marker[] = [];
   offense.forEach(([dx, y], i) => {
     markers.push({ id: `o${i}`, kind: 'O', x: clampX(los + dx), y });
@@ -505,65 +514,78 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         </span>
       </header>
 
-      <div className={`gameday-field ${pulse % 2 === 0 ? 'pulse-a' : 'pulse-b'}`} aria-label="Football field">
-        <div className="gameday-endzone left">
+      <div
+        className={`gameday-field ${pulse % 2 === 0 ? 'pulse-a' : 'pulse-b'}`}
+        aria-label="Football field"
+      >
+        <div className="gameday-field-shell">
           <GoalPosts side="left" />
-          <TeamLogo team={home} size={40} />
-          <span>
-            {home.city}
-            <br />
-            {home.name}
-          </span>
-        </div>
 
-        <div className="gameday-grid">
-          <div className="gameday-hashes" aria-hidden />
-          {[10, 20, 30, 40, 50, 40, 30, 20, 10].map((n, i) => (
-            <div key={i} className="gameday-yard" data-n={n} />
-          ))}
+          <div className="gameday-pitch">
+            <div className="gameday-endzone left">
+              <span className="gameday-ez-word">{home.name}</span>
+              <TeamLogo team={home} size={36} />
+            </div>
 
-          <div
-            className="gameday-los"
-            style={{ left: `${yardToLeft(showLos)}%` }}
-            title="Line of scrimmage"
-          />
-          <div
-            className="gameday-fd"
-            style={{ left: `${yardToLeft(showFd)}%` }}
-            title="First down"
-          />
+            <div className="gameday-grid">
+              <div className="gameday-turf" aria-hidden />
+              <div className="gameday-yardlines" aria-hidden />
+              <div className="gameday-hash-row top" aria-hidden />
+              <div className="gameday-hash-row bottom" aria-hidden />
+              <div className="gameday-goal-line left" aria-hidden />
+              <div className="gameday-goal-line right" aria-hidden />
 
-          {markers.map((m) => (
-            <span
-              key={m.id}
-              className={`gameday-marker kind-${m.kind}`}
-              style={{ left: `${m.x}%`, top: `${m.y}%` }}
-            >
-              {m.kind}
-            </span>
-          ))}
+              {YARD_NUMBERS.map((row) => (
+                <div
+                  key={`yn-${row.at}`}
+                  className="gameday-yardnum"
+                  style={{ left: `${row.at}%` }}
+                  data-n={row.n}
+                  aria-hidden
+                />
+              ))}
 
-          <div
-            key={`ball-${fx.key}-${fx.kind}`}
-            className={`gameday-ball ${ballClass(fx.kind)}`}
-            style={
-              {
-                '--ball-from': `${ballFrom}%`,
-                '--ball-to': `${ballTo}%`,
-              } as CSSProperties
-            }
-            aria-hidden
-          />
-        </div>
+              <div
+                className="gameday-los"
+                style={{ left: `${yardToLeft(showLos)}%` }}
+                title="Line of scrimmage"
+              />
+              <div
+                className="gameday-fd"
+                style={{ left: `${yardToLeft(showFd)}%` }}
+                title="First down"
+              />
 
-        <div className="gameday-endzone right">
+              {markers.map((m) => (
+                <span
+                  key={m.id}
+                  className={`gameday-marker kind-${m.kind}`}
+                  style={{ left: `${m.x}%`, top: `${m.y}%` }}
+                >
+                  {m.kind}
+                </span>
+              ))}
+
+              <div
+                key={`ball-${fx.key}-${fx.kind}`}
+                className={`gameday-ball ${ballClass(fx.kind)}`}
+                style={
+                  {
+                    '--ball-from': `${ballFrom}%`,
+                    '--ball-to': `${ballTo}%`,
+                  } as CSSProperties
+                }
+                aria-hidden
+              />
+            </div>
+
+            <div className="gameday-endzone right">
+              <span className="gameday-ez-word">{away.name}</span>
+              <TeamLogo team={away} size={36} />
+            </div>
+          </div>
+
           <GoalPosts side="right" />
-          <TeamLogo team={away} size={40} />
-          <span>
-            {away.city}
-            <br />
-            {away.name}
-          </span>
         </div>
       </div>
 
