@@ -26,7 +26,20 @@ interface Marker {
   kind: 'O' | 'X';
   x: number;
   y: number;
+  role?: string;
 }
+
+type FormationId =
+  | 'shotgun'
+  | 'pistol'
+  | 'iForm'
+  | 'singleback'
+  | 'trips'
+  | 'empty'
+  | 'goalLine'
+  | 'kick'
+  | 'punt'
+  | 'kickoff';
 
 interface FieldFx {
   key: number;
@@ -36,11 +49,25 @@ interface FieldFx {
   los: number;
   firstDown: number;
   dir: 1 | -1;
+  formation: FormationId;
+  /** Ball start/end as % of the pitch layer (includes end zones). */
+  ballFromX: number;
+  ballFromY: number;
+  ballToX: number;
+  ballToY: number;
+  handoffX: number;
+  handoffY: number;
+  made: boolean;
 }
 
 /** Map 0–100 yard line onto the playable grid (goal line to goal line). */
 function yardToLeft(yard: number): number {
   return Math.min(100, Math.max(0, yard));
+}
+
+/** Yard line → % across the full pitch (end zone + field + end zone). */
+function yardToPitch(yard: number): number {
+  return 8.5 + (Math.min(100, Math.max(0, yard)) / 100) * 83;
 }
 
 const YARD_NUMBERS = [
@@ -71,167 +98,410 @@ function GoalPosts({ side }: { side: 'left' | 'right' }) {
   );
 }
 
+function FootballIcon() {
+  return (
+    <svg className="gameday-ball-svg" viewBox="0 0 48 28" aria-hidden>
+      <defs>
+        <radialGradient id="fb-leather" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#a5673f" />
+          <stop offset="55%" stopColor="#6b3a1f" />
+          <stop offset="100%" stopColor="#3d2110" />
+        </radialGradient>
+      </defs>
+      <ellipse cx="24" cy="14" rx="22" ry="12" fill="url(#fb-leather)" stroke="#2a160c" strokeWidth="1" />
+      <path
+        d="M6 14 Q24 6.5 42 14"
+        fill="none"
+        stroke="rgba(245,230,210,0.35)"
+        strokeWidth="1.1"
+      />
+      <path
+        d="M6 14 Q24 21.5 42 14"
+        fill="none"
+        stroke="rgba(0,0,0,0.25)"
+        strokeWidth="1"
+      />
+      <line x1="15" y1="14" x2="33" y2="14" stroke="#f7f1e6" strokeWidth="1.6" strokeLinecap="round" />
+      {[18, 21, 24, 27, 30].map((x) => (
+        <line
+          key={x}
+          x1={x}
+          y1="11.2"
+          x2={x}
+          y2="16.8"
+          stroke="#f7f1e6"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+        />
+      ))}
+      <ellipse cx="24" cy="14" rx="22" ry="12" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="0.8" />
+    </svg>
+  );
+}
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, n));
+}
+
+function pickFormation(live: LiveGameState, kind: PlayKind | 'idle', seed: number): FormationId {
+  if (kind === 'fieldGoal' || kind === 'extraPoint') return 'kick';
+  if (kind === 'punt') return 'punt';
+  if (kind === 'kickoff' || live.phase === 'kickoff') return 'kickoff';
+
+  const toGoal =
+    live.possession === 'home' ? 100 - live.ballOn : live.ballOn;
+  if (toGoal <= 5 || (kind === 'run' && toGoal <= 8)) return 'goalLine';
+
+  const options: FormationId[] =
+    kind === 'pass' || kind === 'sack'
+      ? ['shotgun', 'shotgun', 'pistol', 'trips', 'empty', 'singleback']
+      : kind === 'run'
+        ? ['iForm', 'singleback', 'pistol', 'shotgun', 'goalLine']
+        : live.down >= 3 && live.distance >= 6
+          ? ['shotgun', 'trips', 'empty', 'pistol']
+          : ['singleback', 'shotgun', 'iForm', 'pistol', 'trips'];
+
+  return options[Math.abs(seed) % options.length]!;
+}
+
+type Spot = [number, number]; // dx from LOS in yard-%, y 0-100
+
+function olLine(_dir: 1 | -1, depth = 0): Spot[] {
+  return [
+    [depth, 34],
+    [depth, 42],
+    [depth, 50],
+    [depth, 58],
+    [depth, 66],
+  ];
+}
+
+function defenseBase(dir: 1 | -1, front: 'odd' | 'even' | 'nickel' = 'odd'): Spot[] {
+  const d = dir * 3.0;
+  if (front === 'nickel') {
+    return [
+      [d, 36],
+      [d, 50],
+      [d, 64],
+      [d + dir * 2.2, 24],
+      [d + dir * 2.2, 76],
+      [d + dir * 4.5, 32],
+      [d + dir * 4.5, 50],
+      [d + dir * 4.5, 68],
+      [d + dir * 8.5, 20],
+      [d + dir * 8.5, 50],
+      [d + dir * 8.5, 80],
+    ];
+  }
+  if (front === 'even') {
+    return [
+      [d, 32],
+      [d, 44],
+      [d, 56],
+      [d, 68],
+      [d + dir * 3.2, 26],
+      [d + dir * 3.2, 74],
+      [d + dir * 5.0, 40],
+      [d + dir * 5.0, 60],
+      [d + dir * 8.0, 22],
+      [d + dir * 8.0, 50],
+      [d + dir * 8.0, 78],
+    ];
+  }
+  return [
+    [d, 34],
+    [d, 46],
+    [d, 54],
+    [d, 66],
+    [d + dir * 2.2, 22],
+    [d + dir * 2.2, 78],
+    [d + dir * 4.5, 38],
+    [d + dir * 4.5, 50],
+    [d + dir * 4.5, 62],
+    [d + dir * 8.0, 26],
+    [d + dir * 8.0, 74],
+  ];
+}
+
+function preSnapOffense(formation: FormationId, dir: 1 | -1): { spots: Spot[]; roles: string[] } {
+  const back = -dir;
+  switch (formation) {
+    case 'shotgun':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'rb', 'wr', 'wr', 'wr'],
+        spots: [
+          [back * 5.5, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 0.8, 28],
+          [back * 5.5, 62],
+          [back * 1.0 + dir * 0.5, 14],
+          [back * 1.0 + dir * 0.5, 86],
+          [back * 0.6 + dir * 1.2, 22],
+        ],
+      };
+    case 'pistol':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'rb', 'wr', 'wr', 'wr'],
+        spots: [
+          [back * 4.2, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 0.6, 72],
+          [back * 6.5, 50],
+          [back * 1.0, 14],
+          [back * 1.0, 86],
+          [back * 0.8, 24],
+        ],
+      };
+    case 'iForm':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'fb', 'rb', 'wr', 'wr'],
+        spots: [
+          [back * 2.4, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 0.5, 28],
+          [back * 5.0, 50],
+          [back * 7.2, 50],
+          [back * 1.0, 14],
+          [back * 1.0, 86],
+        ],
+      };
+    case 'singleback':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'rb', 'wr', 'wr', 'wr'],
+        spots: [
+          [back * 2.4, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 0.6, 70],
+          [back * 6.0, 50],
+          [back * 1.0, 12],
+          [back * 1.0, 88],
+          [back * 0.8, 22],
+        ],
+      };
+    case 'trips':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'rb', 'wr', 'wr', 'wr'],
+        spots: [
+          [back * 5.2, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 0.6, 72],
+          [back * 5.2, 60],
+          [back * 1.0, 14],
+          [back * 0.8, 20],
+          [back * 0.6, 26],
+        ],
+      };
+    case 'empty':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'wr', 'wr', 'wr', 'wr', 'wr'],
+        spots: [
+          [back * 5.5, 50],
+          ...olLine(dir, back * 0.2),
+          [back * 1.0, 12],
+          [back * 0.8, 20],
+          [back * 0.8, 80],
+          [back * 1.0, 88],
+          [back * 0.6, 30],
+        ],
+      };
+    case 'goalLine':
+      return {
+        roles: ['qb', 'ol', 'ol', 'ol', 'ol', 'ol', 'te', 'te', 'fb', 'rb', 'wr'],
+        spots: [
+          [back * 2.0, 50],
+          ...olLine(dir, back * 0.15),
+          [back * 0.3, 26],
+          [back * 0.3, 74],
+          [back * 4.2, 46],
+          [back * 5.8, 54],
+          [back * 0.8, 16],
+        ],
+      };
+    case 'kick':
+      return {
+        roles: ['k', 'h', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol'],
+        spots: [
+          [back * 8.0, 50],
+          [back * 6.2, 50],
+          [back * 0.2, 26],
+          [back * 0.2, 34],
+          [back * 0.2, 42],
+          [back * 0.2, 50],
+          [back * 0.2, 58],
+          [back * 0.2, 66],
+          [back * 0.2, 74],
+          [back * 2.5, 38],
+          [back * 2.5, 62],
+        ],
+      };
+    case 'punt':
+      return {
+        roles: ['p', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'ol', 'g', 'g'],
+        spots: [
+          [back * 7.5, 50],
+          [back * 0.2, 26],
+          [back * 0.2, 34],
+          [back * 0.2, 42],
+          [back * 0.2, 50],
+          [back * 0.2, 58],
+          [back * 0.2, 66],
+          [back * 0.2, 74],
+          [back * 2.0, 30],
+          [back * 2.0, 70],
+          [back * 3.5, 50],
+        ],
+      };
+    case 'kickoff':
+      return {
+        roles: ['k', 'st', 'st', 'st', 'st', 'st', 'st', 'st', 'st', 'st', 'st'],
+        spots: [
+          [back * 2.0, 50],
+          [0, 18],
+          [0, 26],
+          [0, 34],
+          [0, 42],
+          [0, 58],
+          [0, 66],
+          [0, 74],
+          [0, 82],
+          [back * 1.0, 40],
+          [back * 1.0, 60],
+        ],
+      };
+    default:
+      return preSnapOffense('singleback', dir);
+  }
+}
+
 /**
- * Place O (offense) / X (defense) with play-specific movement so the
- * board reads like a real snap — dropbacks, routes, run fits, kicks.
+ * Develop the play from pre-snap: QB throw, RB run, routes, kick.
  */
+function playSpots(
+  formation: FormationId,
+  kind: PlayKind | 'idle',
+  dir: 1 | -1,
+  yards: number,
+  seed: number,
+): { offense: Spot[]; defense: Spot[]; roles: string[]; qb: Spot; target: Spot; handoff: Spot } {
+  const pre = preSnapOffense(formation, dir);
+  const offense = pre.spots.map((s) => [...s] as Spot);
+  const roles = [...pre.roles];
+  let defense = defenseBase(dir, kind === 'pass' || kind === 'sack' ? 'nickel' : 'odd');
+
+  const qbIdx = roles.findIndex((r) => r === 'qb' || r === 'k' || r === 'p');
+  const rbIdx = Math.max(
+    0,
+    roles.findIndex((r) => r === 'rb' || r === 'fb'),
+  );
+  const wrIdxs = roles
+    .map((r, i) => (r === 'wr' || r === 'te' ? i : -1))
+    .filter((i) => i >= 0);
+
+  let qb: Spot = offense[qbIdx >= 0 ? qbIdx : 0] ?? [ -dir * 3, 50 ];
+  let target: Spot = [dir * 8, 40];
+  let handoff: Spot = qb;
+
+  if (kind === 'pass' || kind === 'sack') {
+    // QB drop
+    const drop = kind === 'sack' ? 3.2 : 5.2;
+    qb = [ -dir * drop, 48 + (seed % 5) ];
+    if (qbIdx >= 0) offense[qbIdx] = qb;
+
+    const routeY = [16, 24, 78, 50, 86];
+    const routeX = [7, 11, 9, 14, 6];
+    wrIdxs.forEach((idx, i) => {
+      offense[idx] = [dir * routeX[i % routeX.length]!, routeY[i % routeY.length]!];
+    });
+    if (rbIdx >= 0 && roles[rbIdx] === 'rb') {
+      offense[rbIdx] = [ -dir * 2.5, 60 ];
+    }
+
+    const catchIdx = wrIdxs[seed % Math.max(1, wrIdxs.length)] ?? 0;
+    target = offense[catchIdx] ?? [dir * Math.max(8, Math.abs(yards) || 12), 30];
+    if (kind === 'sack') {
+      target = qb;
+      defense[1] = [qb[0] + dir * 0.8, qb[1]];
+    }
+    defense = defense.map((s, i) =>
+      i < 3 ? [s[0] + dir * 1.2, s[1]] : [s[0] + dir * 2.5, s[1]],
+    ) as Spot[];
+  } else if (kind === 'run') {
+    const laneY = [42, 48, 54, 38, 58][seed % 5]!;
+    const gain = Math.max(2, Math.abs(yards) || 4);
+    handoff = [ -dir * 1.2, laneY ];
+    qb = [ -dir * 2.0, 50 ];
+    if (qbIdx >= 0) offense[qbIdx] = qb;
+    // OL fire off
+    for (let i = 1; i <= 5; i++) {
+      if (offense[i]) offense[i] = [dir * 1.6, offense[i]![1]];
+    }
+    target = [dir * gain, laneY];
+    if (rbIdx >= 0) offense[rbIdx] = target;
+    // lead blockers / WR block
+    wrIdxs.forEach((idx, i) => {
+      offense[idx] = [dir * (2 + i), offense[idx]![1] < 50 ? 20 : 80];
+    });
+    defense = defense.map((s, i) =>
+      i < 4 ? [s[0] - dir * 0.8, s[1] + (i - 2) * 2] : [s[0] + dir * 1.5, s[1]],
+    ) as Spot[];
+  } else if (kind === 'fieldGoal' || kind === 'extraPoint') {
+    qb = [ -dir * 8.0, 50 ]; // kicker
+    handoff = [ -dir * 6.2, 50 ]; // holder / ball spot
+    target = [dir * 40, 50];
+    if (qbIdx >= 0) offense[qbIdx] = qb;
+    const hIdx = roles.findIndex((r) => r === 'h');
+    if (hIdx >= 0) offense[hIdx] = handoff;
+  } else if (kind === 'punt' || kind === 'kickoff') {
+    qb = offense[0] ?? [ -dir * 7, 50 ];
+    target = [dir * Math.max(20, Math.abs(yards) || 40), 50];
+    handoff = qb;
+  } else {
+    target = [0, 50];
+    handoff = qb;
+  }
+
+  return { offense, defense, roles, qb, target, handoff };
+}
+
 function formationMarkers(live: LiveGameState, fx: FieldFx): Marker[] {
   const los = yardToLeft(fx.kind === 'idle' ? live.ballOn : fx.los);
   const dir = fx.dir;
-  const kind = fx.kind;
-  const oBack = -dir * 3.1;
-  const dFwd = dir * 3.2;
+  const developed = fx.kind !== 'idle';
+  const yards = developed ? fx.to - fx.from : 0;
 
-  let offense: Array<[number, number]> = [
-    [oBack - dir * 2.0, 50], // QB
-    [oBack, 30],
-    [oBack, 40],
-    [oBack, 50], // C
-    [oBack, 60],
-    [oBack, 70],
-    [oBack + dir * 1.2, 20], // TE/slot
-    [oBack + dir * 1.2, 80],
-    [oBack - dir * 4.2, 44], // RB
-    [oBack + dir * 4.0, 18], // WR
-    [oBack + dir * 4.0, 82], // WR
-  ];
+  const pack = developed
+    ? playSpots(fx.formation, fx.kind, dir, yards * dir, fx.key)
+    : (() => {
+        const pre = preSnapOffense(fx.formation, dir);
+        return {
+          offense: pre.spots,
+          defense: defenseBase(dir, fx.formation === 'shotgun' || fx.formation === 'empty' ? 'nickel' : 'odd'),
+          roles: pre.roles,
+          qb: pre.spots[0]!,
+          target: pre.spots[0]!,
+          handoff: pre.spots[0]!,
+        };
+      })();
 
-  let defense: Array<[number, number]> = [
-    [dFwd, 34],
-    [dFwd, 46],
-    [dFwd, 54],
-    [dFwd, 66],
-    [dFwd + dir * 2.0, 22],
-    [dFwd + dir * 2.0, 78],
-    [dFwd + dir * 4.2, 38],
-    [dFwd + dir * 4.2, 50],
-    [dFwd + dir * 4.2, 62],
-    [dFwd + dir * 7.2, 28],
-    [dFwd + dir * 7.2, 72],
-  ];
-
-  if (kind === 'pass' || kind === 'sack') {
-    offense = [
-      [oBack - dir * 4.5, 50], // QB drop
-      [oBack, 30],
-      [oBack, 40],
-      [oBack, 50],
-      [oBack, 60],
-      [oBack, 70],
-      [oBack + dir * 5.5, 16], // dig
-      [oBack + dir * 8.5, 78], // go
-      [oBack - dir * 2.5, 58], // check RB
-      [oBack + dir * 9.5, 24], // deep out
-      [oBack + dir * 7.0, 50], // seam
-    ];
-    defense = [
-      [dFwd + dir * 1.5, 34],
-      [dFwd + dir * 1.5, 50],
-      [dFwd + dir * 1.5, 66],
-      [dFwd + dir * 3.5, 20],
-      [dFwd + dir * 3.5, 80],
-      [dFwd + dir * 6.0, 30],
-      [dFwd + dir * 6.0, 50],
-      [dFwd + dir * 6.0, 70],
-      [dFwd + dir * 9.0, 22],
-      [dFwd + dir * 9.0, 50],
-      [dFwd + dir * 9.0, 78],
-    ];
-    if (kind === 'sack') {
-      offense[0] = [oBack - dir * 3.2, 50];
-      defense[1] = [oBack - dir * 2.5, 50];
-    }
-  } else if (kind === 'run') {
-    const lane = dir * 5.5;
-    offense = [
-      [oBack - dir * 1.2, 50],
-      [oBack + dir * 1.5, 34],
-      [oBack + dir * 1.5, 42],
-      [oBack + dir * 1.5, 50],
-      [oBack + dir * 1.5, 58],
-      [oBack + dir * 1.5, 66],
-      [oBack + dir * 2.5, 22],
-      [oBack + lane, 48], // RB through hole
-      [oBack + dir * 3.5, 18],
-      [oBack + dir * 3.5, 82],
-      [oBack + dir * 0.5, 55],
-    ];
-    defense = [
-      [dFwd - dir * 0.5, 36],
-      [dFwd - dir * 0.5, 50],
-      [dFwd - dir * 0.5, 64],
-      [dFwd + dir * 1.5, 28],
-      [dFwd + dir * 1.5, 72],
-      [dFwd + dir * 3.0, 44],
-      [dFwd + dir * 3.0, 56],
-      [dFwd + dir * 5.0, 40],
-      [dFwd + dir * 5.0, 60],
-      [dFwd + dir * 7.0, 32],
-      [dFwd + dir * 7.0, 68],
-    ];
-  } else if (kind === 'fieldGoal' || kind === 'extraPoint') {
-    offense = [
-      [oBack - dir * 5.5, 50], // holder/kicker cluster
-      [oBack - dir * 7.0, 50],
-      [oBack, 28],
-      [oBack, 36],
-      [oBack, 44],
-      [oBack, 56],
-      [oBack, 64],
-      [oBack, 72],
-      [oBack - dir * 2.0, 40],
-      [oBack - dir * 2.0, 60],
-      [oBack + dir * 0.5, 50],
-    ];
-    defense = [
-      [dFwd, 30],
-      [dFwd, 40],
-      [dFwd, 50],
-      [dFwd, 60],
-      [dFwd, 70],
-      [dFwd + dir * 2.0, 35],
-      [dFwd + dir * 2.0, 50],
-      [dFwd + dir * 2.0, 65],
-      [dFwd + dir * 4.0, 45],
-      [dFwd + dir * 4.0, 55],
-      [dFwd + dir * 6.0, 50],
-    ];
-  } else if (kind === 'punt' || kind === 'kickoff') {
-    offense = [
-      [oBack - dir * 6.0, 50],
-      [oBack, 25],
-      [oBack, 35],
-      [oBack, 45],
-      [oBack, 55],
-      [oBack, 65],
-      [oBack, 75],
-      [oBack - dir * 2.0, 30],
-      [oBack - dir * 2.0, 70],
-      [oBack + dir * 2.0, 40],
-      [oBack + dir * 2.0, 60],
-    ];
-    defense = [
-      [dFwd + dir * 8.0, 50],
-      [dFwd + dir * 2.0, 25],
-      [dFwd + dir * 2.0, 40],
-      [dFwd + dir * 2.0, 60],
-      [dFwd + dir * 2.0, 75],
-      [dFwd + dir * 5.0, 35],
-      [dFwd + dir * 5.0, 50],
-      [dFwd + dir * 5.0, 65],
-      [dFwd + dir * 10.0, 30],
-      [dFwd + dir * 10.0, 50],
-      [dFwd + dir * 10.0, 70],
-    ];
-  }
-
-  const clampX = (x: number) => Math.min(98, Math.max(2, x));
+  const clampX = (x: number) => clamp(x, 2, 98);
   const markers: Marker[] = [];
-  offense.forEach(([dx, y], i) => {
-    markers.push({ id: `o${i}`, kind: 'O', x: clampX(los + dx), y });
+  pack.offense.forEach(([dx, y], i) => {
+    markers.push({
+      id: `o${i}`,
+      kind: 'O',
+      x: clampX(los + dx),
+      y,
+      role: pack.roles[i],
+    });
   });
-  defense.forEach(([dx, y], i) => {
-    markers.push({ id: `x${i}`, kind: 'X', x: clampX(los + dx), y });
+  pack.defense.forEach(([dx, y], i) => {
+    markers.push({
+      id: `x${i}`,
+      kind: 'X',
+      x: clampX(los + dx),
+      y,
+      role: 'def',
+    });
   });
   return markers;
 }
@@ -282,12 +552,102 @@ function BoxTable({
   );
 }
 
-function ballClass(kind: PlayKind | 'idle'): string {
+function ballClass(kind: PlayKind | 'idle', made: boolean): string {
   if (kind === 'pass') return 'fly-pass';
-  if (kind === 'fieldGoal' || kind === 'extraPoint') return 'fly-kick';
+  if (kind === 'fieldGoal' || kind === 'extraPoint') return made ? 'fly-kick-good' : 'fly-kick-miss';
   if (kind === 'punt' || kind === 'kickoff') return 'fly-punt';
   if (kind === 'run') return 'fly-run';
+  if (kind === 'sack') return 'fly-sack';
   return 'fly-idle';
+}
+
+function buildFx(
+  prev: LiveGameState,
+  next: LiveGameState,
+  key: number,
+): FieldFx {
+  const from = prev.ballOn;
+  const los = prev.ballOn;
+  const firstDown = firstDownYard(prev);
+  const dir: 1 | -1 = prev.possession === 'home' ? 1 : -1;
+  const kind = next.lastPlay?.kind ?? 'idle';
+  const made = Boolean(next.lastPlay?.scoreKind === 'fg' || next.lastPlay?.scoreKind === 'xp');
+  const formation = pickFormation(prev, kind, key + prev.down * 3 + prev.distance);
+  const yards = next.lastPlay?.yards ?? 0;
+
+  const pack = playSpots(formation, kind, dir, yards, key);
+  const losPitch = yardToPitch(los);
+
+  let ballFromX = losPitch;
+  let ballFromY = 50;
+  let ballToX = yardToPitch(next.ballOn);
+  let ballToY = 50;
+  let handoffX = losPitch;
+  let handoffY = 50;
+
+  if (kind === 'pass') {
+    ballFromX = yardToPitch(clamp(los + pack.qb[0], 0, 100));
+    ballFromY = pack.qb[1];
+    const incomplete = Math.abs(yards) < 1 && !next.lastPlay?.turnover;
+    ballToX = incomplete
+      ? yardToPitch(clamp(los + dir * (10 + (key % 8)), 0, 100))
+      : yardToPitch(next.ballOn);
+    ballToY = pack.target[1];
+    handoffX = ballFromX;
+    handoffY = ballFromY;
+  } else if (kind === 'run') {
+    ballFromX = yardToPitch(clamp(los + pack.qb[0], 0, 100));
+    ballFromY = pack.qb[1];
+    handoffX = yardToPitch(clamp(los + pack.handoff[0], 0, 100));
+    handoffY = pack.handoff[1];
+    ballToX = yardToPitch(next.ballOn);
+    ballToY = pack.target[1];
+  } else if (kind === 'fieldGoal' || kind === 'extraPoint') {
+    ballFromX = yardToPitch(clamp(los + pack.handoff[0], 0, 100));
+    ballFromY = 50;
+    handoffX = ballFromX;
+    handoffY = 50;
+    // Through the uprights (past end zone into post column)
+    if (dir === 1) {
+      ballToX = made ? 102.5 : 96;
+      ballToY = made ? 28 : 12;
+    } else {
+      ballToX = made ? -2.5 : 4;
+      ballToY = made ? 28 : 12;
+    }
+  } else if (kind === 'punt' || kind === 'kickoff') {
+    ballFromX = yardToPitch(clamp(los + pack.qb[0], 0, 100));
+    ballFromY = 50;
+    ballToX = yardToPitch(next.ballOn);
+    ballToY = 42 + (key % 10);
+    handoffX = ballFromX;
+    handoffY = ballFromY;
+  } else if (kind === 'sack') {
+    ballFromX = yardToPitch(clamp(los + pack.qb[0], 0, 100));
+    ballFromY = pack.qb[1];
+    ballToX = ballFromX;
+    ballToY = ballFromY;
+    handoffX = ballFromX;
+    handoffY = ballFromY;
+  }
+
+  return {
+    key,
+    kind,
+    from,
+    to: next.ballOn,
+    los,
+    firstDown,
+    dir,
+    formation,
+    ballFromX,
+    ballFromY,
+    ballToX,
+    ballToY,
+    handoffX,
+    handoffY,
+    made,
+  };
 }
 
 export function GameDay({ state, onFinish, onBack }: Props) {
@@ -306,43 +666,24 @@ export function GameDay({ state, onFinish, onBack }: Props) {
     los: 25,
     firstDown: 35,
     dir: 1,
+    formation: 'shotgun',
+    ballFromX: yardToPitch(25),
+    ballFromY: 50,
+    ballToX: yardToPitch(25),
+    ballToY: 50,
+    handoffX: yardToPitch(25),
+    handoffY: 50,
+    made: false,
   }));
 
   const home = state.teams.find((t) => t.id === live?.homeId);
   const away = state.teams.find((t) => t.id === live?.awayId);
 
   const applyStep = (prev: LiveGameState): LiveGameState => {
-    const from = prev.ballOn;
-    const los = prev.ballOn;
-    const firstDown = firstDownYard(prev);
-    const dir: 1 | -1 = prev.possession === 'home' ? 1 : -1;
     const next = structuredClone(prev);
     stepPlay(state, next);
-    const kind = next.lastPlay?.kind ?? 'idle';
-    let to = next.ballOn;
-    // Field goals / XP fly toward the uprights at the far end line
-    if (kind === 'fieldGoal' || kind === 'extraPoint') {
-      to = dir === 1 ? 100 : 0;
-    } else if (kind === 'punt' || kind === 'kickoff') {
-      to = next.ballOn;
-    } else if (kind === 'pass') {
-      // Incomplete / short throws still show an air arc downfield
-      if (Math.abs(to - from) < 3) {
-        to = Math.min(100, Math.max(0, from + dir * 12));
-      }
-    } else if (kind === 'sack') {
-      to = from;
-    }
     fxKey.current += 1;
-    setFx({
-      key: fxKey.current,
-      kind,
-      from,
-      to,
-      los,
-      firstDown,
-      dir,
-    });
+    setFx(buildFx(prev, next, fxKey.current));
     setPulse((p) => p + 1);
     return next;
   };
@@ -359,7 +700,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         if (next.phase === 'final') setWatching(false);
         return next;
       });
-    }, 1100);
+    }, 1400);
     return () => window.clearInterval(id);
   }, [watching, state]);
 
@@ -367,6 +708,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
   useEffect(() => {
     if (!live || fx.kind === 'idle') return;
     const t = window.setTimeout(() => {
+      const formation = pickFormation(live, 'idle', fx.key + 11);
       setFx((prev) => ({
         ...prev,
         kind: 'idle',
@@ -375,8 +717,16 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         los: live.ballOn,
         firstDown: firstDownYard(live),
         dir: live.possession === 'home' ? 1 : -1,
+        formation,
+        ballFromX: yardToPitch(live.ballOn),
+        ballFromY: 50,
+        ballToX: yardToPitch(live.ballOn),
+        ballToY: 50,
+        handoffX: yardToPitch(live.ballOn),
+        handoffY: 50,
+        made: false,
       }));
-    }, 950);
+    }, 1200);
     return () => window.clearTimeout(t);
   }, [fx.key, live]);
 
@@ -405,8 +755,6 @@ export function GameDay({ state, onFinish, onBack }: Props) {
 
   const showLos = fx.kind === 'idle' ? live.ballOn : fx.los;
   const showFd = fx.kind === 'idle' ? firstDownYard(live) : fx.firstDown;
-  const ballFrom = yardToLeft(fx.from);
-  const ballTo = yardToLeft(fx.kind === 'idle' ? live.ballOn : fx.to);
 
   const nextPlay = () => {
     setWatching(false);
@@ -422,6 +770,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
       if (!prev || prev.phase === 'final') return prev;
       const next = structuredClone(prev);
       stepUntilQuarterChange(state, next);
+      const formation = pickFormation(next, 'idle', fxKey.current + 3);
       setFx({
         key: ++fxKey.current,
         kind: 'idle',
@@ -430,6 +779,14 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         los: next.ballOn,
         firstDown: firstDownYard(next),
         dir: next.possession === 'home' ? 1 : -1,
+        formation,
+        ballFromX: yardToPitch(next.ballOn),
+        ballFromY: 50,
+        ballToX: yardToPitch(next.ballOn),
+        ballToY: 50,
+        handoffX: yardToPitch(next.ballOn),
+        handoffY: 50,
+        made: false,
       });
       setPulse((p) => p + 1);
       return next;
@@ -483,6 +840,15 @@ export function GameDay({ state, onFinish, onBack }: Props) {
     );
   }
 
+  const ballStyle = {
+    '--ball-from': `${fx.ballFromX}%`,
+    '--ball-to': `${fx.ballToX}%`,
+    '--ball-from-y': `${fx.ballFromY}%`,
+    '--ball-to-y': `${fx.ballToY}%`,
+    '--ball-hand-x': `${fx.handoffX}%`,
+    '--ball-hand-y': `${fx.handoffY}%`,
+  } as CSSProperties;
+
   return (
     <div
       className="gameday-root"
@@ -511,6 +877,7 @@ export function GameDay({ state, onFinish, onBack }: Props) {
         <span className="gameday-scheme">
           {live.possession === 'home' ? home.abbrev : away.abbrev} ·{' '}
           {live.possession === 'home' ? live.homeScheme : live.awayScheme}
+          {fx.kind === 'idle' ? ` · ${fx.formation}` : ''}
         </span>
       </header>
 
@@ -559,29 +926,27 @@ export function GameDay({ state, onFinish, onBack }: Props) {
               {markers.map((m) => (
                 <span
                   key={m.id}
-                  className={`gameday-marker kind-${m.kind}`}
+                  className={`gameday-marker kind-${m.kind}${m.role === 'rb' && fx.kind === 'run' ? ' is-carrier' : ''}${m.role === 'qb' && (fx.kind === 'pass' || fx.kind === 'sack') ? ' is-qb' : ''}`}
                   style={{ left: `${m.x}%`, top: `${m.y}%` }}
+                  data-role={m.role}
                 >
                   {m.kind}
                 </span>
               ))}
-
-              <div
-                key={`ball-${fx.key}-${fx.kind}`}
-                className={`gameday-ball ${ballClass(fx.kind)}`}
-                style={
-                  {
-                    '--ball-from': `${ballFrom}%`,
-                    '--ball-to': `${ballTo}%`,
-                  } as CSSProperties
-                }
-                aria-hidden
-              />
             </div>
 
             <div className="gameday-endzone right">
               <span className="gameday-ez-word">{away.name}</span>
               <TeamLogo team={away} size={36} />
+            </div>
+
+            <div
+              key={`ball-${fx.key}-${fx.kind}`}
+              className={`gameday-ball ${ballClass(fx.kind, fx.made)}`}
+              style={ballStyle}
+              aria-hidden
+            >
+              <FootballIcon />
             </div>
           </div>
 

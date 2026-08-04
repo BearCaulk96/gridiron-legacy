@@ -2072,16 +2072,18 @@ table.data tr:hover td {
   grid-template-columns: clamp(18px, 3.2%, 36px) 1fr clamp(18px, 3.2%, 36px);
   align-items: stretch;
   gap: 0;
+  overflow: visible;
   filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.55));
 }
 
 .gameday-pitch {
+  position: relative;
   display: grid;
   grid-template-columns: 8.5% 1fr 8.5%;
   min-width: 0;
   border: 3px solid #f4f4f0;
   border-radius: 2px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.35),
     0 0 0 4px #0c3a24,
@@ -2166,6 +2168,7 @@ table.data tr:hover td {
   overflow: hidden;
   min-width: 0;
   isolation: isolate;
+  border-radius: 0;
 }
 
 .gameday-turf {
@@ -2324,121 +2327,178 @@ table.data tr:hover td {
 .gameday-ball {
   --ball-from: 50%;
   --ball-to: 50%;
+  --ball-from-y: 50%;
+  --ball-to-y: 50%;
+  --ball-hand-x: 50%;
+  --ball-hand-y: 50%;
   position: absolute;
   left: var(--ball-to);
-  top: 50%;
-  width: 11px;
-  height: 17px;
-  margin-left: -5.5px;
-  margin-top: -8.5px;
-  border-radius: 40%;
-  background: radial-gradient(circle at 30% 30%, #d4a574, #6b3e1f);
-  border: 1px solid #f0e0c8;
-  z-index: 6;
+  top: var(--ball-to-y);
+  width: clamp(22px, 3.2vw, 34px);
+  height: auto;
+  aspect-ratio: 48 / 28;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  z-index: 8;
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+.gameday-ball-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .gameday-ball.fly-idle {
-  animation: gameday-ball-pulse 1.1s ease-in-out infinite;
-  transition: left 0.35s ease;
+  animation: gameday-ball-pulse 1.2s ease-in-out infinite;
+  transition: left 0.35s ease, top 0.35s ease;
 }
 
 .gameday-ball.fly-pass {
-  animation: ball-fly-pass 0.92s cubic-bezier(0.33, 0.1, 0.4, 1) forwards;
-}
-
-.gameday-ball.fly-kick {
-  animation: ball-fly-kick 1.05s cubic-bezier(0.2, 0.55, 0.35, 1) forwards;
-}
-
-.gameday-ball.fly-punt {
-  animation: ball-fly-punt 1.0s cubic-bezier(0.25, 0.4, 0.35, 1) forwards;
+  animation: ball-fly-pass 1.15s cubic-bezier(0.28, 0.15, 0.35, 1) forwards;
 }
 
 .gameday-ball.fly-run {
-  animation: ball-fly-run 0.75s ease-in-out forwards;
+  animation: ball-fly-run 1.15s cubic-bezier(0.33, 0.2, 0.3, 1) forwards;
+}
+
+.gameday-ball.fly-kick-good {
+  animation: ball-fly-kick-good 1.25s cubic-bezier(0.2, 0.55, 0.3, 1) forwards;
+}
+
+.gameday-ball.fly-kick-miss {
+  animation: ball-fly-kick-miss 1.2s cubic-bezier(0.25, 0.4, 0.4, 1) forwards;
+}
+
+.gameday-ball.fly-punt {
+  animation: ball-fly-punt 1.15s cubic-bezier(0.25, 0.4, 0.35, 1) forwards;
+}
+
+.gameday-ball.fly-sack {
+  animation: ball-fly-sack 0.85s ease-in-out forwards;
 }
 
 @keyframes gameday-ball-pulse {
   0%,
   100% {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
   50% {
-    transform: scale(1.12);
+    transform: translate(-50%, -50%) scale(1.08);
   }
 }
 
+/* QB holds, then throws on an arc to the receiver */
 @keyframes ball-fly-pass {
   0% {
     left: var(--ball-from);
-    top: 48%;
-    transform: rotate(0deg) scale(1);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1);
   }
-  40% {
-    top: 18%;
-    transform: rotate(160deg) scale(1.18);
+  18% {
+    left: var(--ball-from);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(-18deg) scale(1.02);
+  }
+  55% {
+    top: calc(var(--ball-to-y) * 0.35);
+    transform: translate(-50%, -50%) rotate(140deg) scale(1.12);
   }
   100% {
     left: var(--ball-to);
-    top: 46%;
-    transform: rotate(320deg) scale(1);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(280deg) scale(1);
   }
 }
 
-@keyframes ball-fly-kick {
+/* Handoff, then runner carries the ball downfield */
+@keyframes ball-fly-run {
   0% {
     left: var(--ball-from);
-    top: 58%;
-    transform: rotate(-20deg) scale(1);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.95);
   }
-  35% {
-    top: 6%;
-    transform: rotate(120deg) scale(0.95);
-  }
-  70% {
-    top: 4%;
-    transform: rotate(260deg) scale(0.8);
+  16% {
+    left: var(--ball-hand-x);
+    top: var(--ball-hand-y);
+    transform: translate(-50%, -50%) rotate(20deg) scale(1);
   }
   100% {
     left: var(--ball-to);
-    top: 12%;
-    transform: rotate(400deg) scale(0.65);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(55deg) scale(1);
+  }
+}
+
+/* Kick rises and threads the uprights */
+@keyframes ball-fly-kick-good {
+  0% {
+    left: var(--ball-from);
+    top: 58%;
+    transform: translate(-50%, -50%) rotate(-25deg) scale(1);
+  }
+  28% {
+    top: 10%;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.95);
+  }
+  62% {
+    top: 6%;
+    transform: translate(-50%, -50%) rotate(220deg) scale(0.78);
+  }
+  100% {
+    left: var(--ball-to);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(380deg) scale(0.55);
+    opacity: 0.85;
+  }
+}
+
+@keyframes ball-fly-kick-miss {
+  0% {
+    left: var(--ball-from);
+    top: 58%;
+    transform: translate(-50%, -50%) rotate(-20deg) scale(1);
+  }
+  35% {
+    top: 8%;
+    transform: translate(-50%, -50%) rotate(120deg) scale(0.9);
+  }
+  100% {
+    left: var(--ball-to);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(300deg) scale(0.6);
+    opacity: 0.55;
   }
 }
 
 @keyframes ball-fly-punt {
   0% {
     left: var(--ball-from);
-    top: 52%;
-    transform: rotate(0deg) scale(1);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
   }
-  45% {
-    top: 10%;
-    transform: rotate(200deg) scale(1.05);
+  40% {
+    top: 8%;
+    transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
   }
   100% {
     left: var(--ball-to);
-    top: 48%;
-    transform: rotate(400deg) scale(1);
+    top: var(--ball-to-y);
+    transform: translate(-50%, -50%) rotate(400deg) scale(1);
   }
 }
 
-@keyframes ball-fly-run {
-  0% {
-    left: var(--ball-from);
-    top: 50%;
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    top: 46%;
-    transform: rotate(40deg) scale(1.05);
-  }
+@keyframes ball-fly-sack {
+  0%,
   100% {
-    left: var(--ball-to);
-    top: 50%;
-    transform: rotate(80deg) scale(1);
+    left: var(--ball-from);
+    top: var(--ball-from-y);
+    transform: translate(-50%, -50%) rotate(-12deg);
+  }
+  40% {
+    transform: translate(-50%, -50%) rotate(18deg) scale(0.96);
   }
 }
 
@@ -2457,7 +2517,7 @@ table.data tr:hover td {
 
 .gameday-field.pulse-a .gameday-marker,
 .gameday-field.pulse-b .gameday-marker {
-  transition: left 0.7s cubic-bezier(0.22, 0.61, 0.36, 1), top 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: left 1.05s cubic-bezier(0.22, 0.61, 0.36, 1), top 1.05s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .gameday-marker.kind-O {
@@ -2466,6 +2526,18 @@ table.data tr:hover td {
 
 .gameday-marker.kind-X {
   color: #111;
+}
+
+.gameday-marker.is-carrier {
+  color: #ffe566;
+  font-size: 1.2em;
+  z-index: 5;
+  filter: drop-shadow(0 0 4px rgba(255, 220, 80, 0.65));
+}
+
+.gameday-marker.is-qb {
+  z-index: 5;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.45));
 }
 
 .gameday-board {
