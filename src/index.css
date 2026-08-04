@@ -2062,12 +2062,8 @@ table.data tr:hover td {
   position: relative;
 }
 
-.gameday-field.pulse-a .gameday-marker,
-.gameday-field.pulse-b .gameday-marker {
-  transition: left 0.45s ease, top 0.45s ease;
-}
-
 .gameday-endzone {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2075,6 +2071,7 @@ table.data tr:hover td {
   gap: 0.35rem;
   padding: 0.4rem;
   text-align: center;
+  overflow: visible;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--home-primary) 88%, #000), var(--home-primary));
   color: var(--home-secondary);
@@ -2083,15 +2080,37 @@ table.data tr:hover td {
   font-size: clamp(0.7rem, 1.6vw, 1rem);
   line-height: 1.05;
   writing-mode: horizontal-tb;
+  z-index: 1;
 }
 
 .gameday-endzone.right {
   background:
-    linear-gradient(0deg, color-mix(in srgb, var(--home-primary) 88%, #000), var(--home-primary));
+    linear-gradient(0deg, color-mix(in srgb, var(--away-primary) 88%, #000), var(--away-primary));
+  color: var(--away-secondary);
+}
+
+.gameday-posts {
+  position: absolute;
+  top: 50%;
+  width: clamp(28px, 4.5vw, 42px);
+  height: clamp(56px, 9vw, 84px);
+  transform: translateY(-58%);
+  z-index: 5;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+}
+
+.gameday-posts.left {
+  left: 4%;
+}
+
+.gameday-posts.right {
+  right: 4%;
 }
 
 .gameday-grid {
   position: relative;
+  overflow: hidden;
   background:
     repeating-linear-gradient(
       90deg,
@@ -2101,6 +2120,23 @@ table.data tr:hover td {
       rgba(232, 228, 217, 0.22) calc(100% / 10)
     ),
     linear-gradient(180deg, #176848 0%, #0f4d34 45%, #0c3d29 100%);
+}
+
+.gameday-hashes {
+  position: absolute;
+  inset: 28% 0 28%;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(100% / 20 - 1px),
+      rgba(232, 228, 217, 0.14) calc(100% / 20 - 1px),
+      rgba(232, 228, 217, 0.14) calc(100% / 20)
+    );
+  border-top: 1px solid rgba(232, 228, 217, 0.18);
+  border-bottom: 1px solid rgba(232, 228, 217, 0.18);
+  z-index: 1;
 }
 
 .gameday-yard {
@@ -2152,20 +2188,60 @@ table.data tr:hover td {
   transform: translateX(-50%);
   z-index: 2;
   box-shadow: 0 0 8px rgba(245, 240, 200, 0.35);
+  transition: left 0.35s ease;
+}
+
+.gameday-fd {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #f5d000;
+  transform: translateX(-50%);
+  z-index: 2;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 0 10px rgba(245, 208, 0, 0.55);
+  transition: left 0.35s ease;
 }
 
 .gameday-ball {
+  --ball-from: 50%;
+  --ball-to: 50%;
   position: absolute;
+  left: var(--ball-to);
   top: 50%;
-  width: 10px;
-  height: 16px;
-  margin-left: -5px;
-  margin-top: -8px;
+  width: 11px;
+  height: 17px;
+  margin-left: -5.5px;
+  margin-top: -8.5px;
   border-radius: 40%;
   background: radial-gradient(circle at 30% 30%, #d4a574, #6b3e1f);
   border: 1px solid #f0e0c8;
-  z-index: 3;
+  z-index: 6;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.gameday-ball.fly-idle {
   animation: gameday-ball-pulse 1.1s ease-in-out infinite;
+  transition: left 0.35s ease;
+}
+
+.gameday-ball.fly-pass {
+  animation: ball-fly-pass 0.92s cubic-bezier(0.33, 0.1, 0.4, 1) forwards;
+}
+
+.gameday-ball.fly-kick {
+  animation: ball-fly-kick 1.05s cubic-bezier(0.2, 0.55, 0.35, 1) forwards;
+}
+
+.gameday-ball.fly-punt {
+  animation: ball-fly-punt 1.0s cubic-bezier(0.25, 0.4, 0.35, 1) forwards;
+}
+
+.gameday-ball.fly-run {
+  animation: ball-fly-run 0.75s ease-in-out forwards;
 }
 
 @keyframes gameday-ball-pulse {
@@ -2178,6 +2254,78 @@ table.data tr:hover td {
   }
 }
 
+@keyframes ball-fly-pass {
+  0% {
+    left: var(--ball-from);
+    top: 48%;
+    transform: rotate(0deg) scale(1);
+  }
+  40% {
+    top: 18%;
+    transform: rotate(160deg) scale(1.18);
+  }
+  100% {
+    left: var(--ball-to);
+    top: 46%;
+    transform: rotate(320deg) scale(1);
+  }
+}
+
+@keyframes ball-fly-kick {
+  0% {
+    left: var(--ball-from);
+    top: 58%;
+    transform: rotate(-20deg) scale(1);
+  }
+  35% {
+    top: 6%;
+    transform: rotate(120deg) scale(0.95);
+  }
+  70% {
+    top: 4%;
+    transform: rotate(260deg) scale(0.8);
+  }
+  100% {
+    left: var(--ball-to);
+    top: 12%;
+    transform: rotate(400deg) scale(0.65);
+  }
+}
+
+@keyframes ball-fly-punt {
+  0% {
+    left: var(--ball-from);
+    top: 52%;
+    transform: rotate(0deg) scale(1);
+  }
+  45% {
+    top: 10%;
+    transform: rotate(200deg) scale(1.05);
+  }
+  100% {
+    left: var(--ball-to);
+    top: 48%;
+    transform: rotate(400deg) scale(1);
+  }
+}
+
+@keyframes ball-fly-run {
+  0% {
+    left: var(--ball-from);
+    top: 50%;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    top: 46%;
+    transform: rotate(40deg) scale(1.05);
+  }
+  100% {
+    left: var(--ball-to);
+    top: 50%;
+    transform: rotate(80deg) scale(1);
+  }
+}
+
 .gameday-marker {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -2186,7 +2334,12 @@ table.data tr:hover td {
   line-height: 1;
   z-index: 4;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-  animation: gameday-marker-in 0.35s ease-out;
+  will-change: left, top;
+}
+
+.gameday-field.pulse-a .gameday-marker,
+.gameday-field.pulse-b .gameday-marker {
+  transition: left 0.7s cubic-bezier(0.22, 0.61, 0.36, 1), top 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .gameday-marker.kind-O {
@@ -2195,17 +2348,6 @@ table.data tr:hover td {
 
 .gameday-marker.kind-X {
   color: #1a1a1a;
-}
-
-@keyframes gameday-marker-in {
-  from {
-    opacity: 0.35;
-    transform: translate(-50%, -50%) scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
 }
 
 .gameday-board {
