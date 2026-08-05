@@ -3603,6 +3603,110 @@ table.data tr:hover td {
   background: rgba(240, 162, 2, 0.14);
 }
 
+.setup-picked {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.setup-diff-page {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+.setup-diff-grid-stack {
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+  align-content: start;
+  overflow: auto;
+  min-height: 0;
+  padding-right: 0.1rem;
+}
+
+.setup-diff-card-lg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  min-height: 0;
+}
+
+.setup-diff-card-lg strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  line-height: 1;
+}
+
+.setup-diff-card-lg small {
+  font-family: var(--font-body);
+  letter-spacing: 0.02em;
+  font-size: 0.78rem;
+  color: var(--chalk-dim);
+  line-height: 1.25;
+}
+
+.setup-diff-summary {
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.setup-diff-summary .tag {
+  margin: 0;
+}
+
+.setup-diff-summary h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  line-height: 1;
+}
+
+.setup-diff-tagline {
+  margin: 0;
+  color: var(--amber);
+  font-size: 0.95rem;
+}
+
+.setup-diff-desc {
+  margin: 0.15rem 0 0;
+  color: var(--chalk);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.setup-diff-bullets {
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--chalk-dim);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.setup-diff-bullets li::marker {
+  color: var(--amber);
+}
+
 .setup-franchise {
   display: flex;
   justify-content: space-between;
@@ -3724,6 +3828,16 @@ table.data tr:hover td {
   .setup-teams {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .setup-diff-page {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+
+  .setup-diff-grid-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
 }
 
 @media (max-width: 640px) {
@@ -3737,6 +3851,10 @@ table.data tr:hover td {
 
   .setup-teams {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .setup-diff-grid-stack {
+    grid-template-columns: 1fr;
   }
 }
 
