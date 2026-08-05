@@ -148,17 +148,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
         />
         <div className="title-bg-shade" />
 
-        <header className="title-top">
-          <div className="title-ufa">
-            <span>United Football</span>
-            <div className="title-ufa-mark">
-              <small>★★★</small>
-              <strong>UFA</strong>
-            </div>
-            <span>Association</span>
-          </div>
-        </header>
-
         <main className="title-center">
           <h1 className="title-wordmark">
             <span className="silver">GRIDIRON</span>
@@ -168,7 +157,6 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
               <i />
             </span>
           </h1>
-          <p className="title-slogan">Build your franchise. Make your legacy.</p>
 
           <Trophy />
         </main>
