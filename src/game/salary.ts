@@ -15,7 +15,9 @@ export const VETERAN_MINIMUM = 1_125_000;
 
 export function playerCapHit(player: Player): number {
   if (!player.contract) return 0;
-  return player.contract.annualSalary;
+  const bonus = player.contract.signingBonus ?? 0;
+  const years = Math.max(1, player.contract.years);
+  return player.contract.annualSalary + Math.round(bonus / years);
 }
 
 export function teamCapHit(state: LeagueState, teamId: string): number {
@@ -74,6 +76,7 @@ export function suggestedContract(
 ): {
   years: number;
   annualSalary: number;
+  signingBonus: number;
   guaranteed: number;
 } {
   let annual: number;
@@ -92,7 +95,6 @@ export function suggestedContract(
   // Position market premiums (NFL-ish)
   if (position === 'QB' && overall >= 80) annual = Math.round(annual * 1.2);
   else if (position === 'WR' && overall >= 85) annual = Math.round(annual * 1.08);
-  else if (position === 'OT' as Position) annual = annual;
   else if ((position === 'OL' || position === 'DL') && overall >= 85) annual = Math.round(annual * 1.05);
   else if (position === 'K' || position === 'P') annual = Math.min(annual, 6_000_000);
 
@@ -103,10 +105,13 @@ export function suggestedContract(
   annual = Math.round(annual / 50_000) * 50_000;
   annual = Math.max(VETERAN_MINIMUM, annual);
 
+  const signingBonus = Math.round((annual * years * (overall >= 85 ? 0.18 : 0.12)) / 50_000) * 50_000;
+
   return {
     years,
     annualSalary: annual,
-    guaranteed: Math.round(annual * years * (overall >= 85 ? 0.55 : 0.35)),
+    signingBonus,
+    guaranteed: Math.round(annual * years * (overall >= 85 ? 0.55 : 0.35) + signingBonus),
   };
 }
 
@@ -121,9 +126,10 @@ export function rookieScaleContract(
 ): {
   years: number;
   annualSalary: number;
+  signingBonus: number;
   guaranteed: number;
 } {
-  const years = round <= 2 ? 4 : 4;
+  const years = 4;
   let aav: number;
 
   if (overallPick === 1) aav = 12_700_000;
@@ -143,11 +149,13 @@ export function rookieScaleContract(
   if (position === 'K' || position === 'P') aav = Math.min(aav, 1_200_000);
 
   aav = Math.round(Math.max(VETERAN_MINIMUM * 0.9, aav) / 25_000) * 25_000;
+  const signingBonus = Math.round((aav * years * (round === 1 ? 0.35 : round <= 3 ? 0.2 : 0.08)) / 25_000) * 25_000;
 
   return {
     years,
     annualSalary: aav,
-    guaranteed: Math.round(aav * years * (round === 1 ? 0.75 : round <= 3 ? 0.5 : 0.25)),
+    signingBonus,
+    guaranteed: Math.round(aav * years * (round === 1 ? 0.75 : round <= 3 ? 0.5 : 0.25) + signingBonus),
   };
 }
 

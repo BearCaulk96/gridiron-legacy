@@ -8,6 +8,7 @@ import { Coaches } from './components/Coaches';
 import { Draft } from './components/Draft';
 import { Trade } from './components/Trade';
 import { FreeAgency } from './components/FreeAgency';
+import { Contracts } from './components/Contracts';
 import { Standings } from './components/Standings';
 import { Cap } from './components/Cap';
 import { GameDay } from './components/GameDay';
@@ -88,6 +89,19 @@ export default function App() {
           state={state}
           onSign={actions.signFA}
           onFinish={actions.finishFreeAgencyWeek}
+          onBack={() => game.setScreen('hub')}
+        />
+        {game.toast && <div className="toast">{game.toast}</div>}
+      </>
+    );
+  }
+
+  if (game.screen === 'contracts') {
+    return (
+      <>
+        <Contracts
+          state={state}
+          onResign={actions.resignPlayer}
           onBack={() => game.setScreen('hub')}
         />
         {game.toast && <div className="toast">{game.toast}</div>}

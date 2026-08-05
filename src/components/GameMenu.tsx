@@ -1,7 +1,10 @@
 import type { Screen } from '../hooks/useLeague';
 
 export type MenuDestination =
-  | Extract<Screen, 'hub' | 'roster' | 'freeAgency' | 'trade' | 'draft' | 'coaches' | 'standings' | 'cap'>
+  | Extract<
+      Screen,
+      'hub' | 'roster' | 'freeAgency' | 'contracts' | 'trade' | 'draft' | 'coaches' | 'standings' | 'cap'
+    >
   | 'title';
 
 interface Item {
@@ -14,6 +17,7 @@ const ITEMS: Item[] = [
   { id: 'hub', label: 'Head Office', blurb: 'Calendar, news, and weekly actions' },
   { id: 'roster', label: 'My Team', blurb: 'Roster, depth, and cuts' },
   { id: 'freeAgency', label: 'Free Agency', blurb: 'Available players and signings' },
+  { id: 'contracts', label: 'Contracts', blurb: 'Re-sign expiring players' },
   { id: 'trade', label: 'Trade Block', blurb: 'Offers, picks, and swaps' },
   { id: 'draft', label: 'Draft Board', blurb: 'Scouting and draft night' },
   { id: 'coaches', label: 'Coaches', blurb: 'Staff and schemes' },

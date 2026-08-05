@@ -68,12 +68,12 @@ export function schemeFit(state: LeagueState, p: Player): number {
 export function contractDemand(p: Player) {
   const years = p.overall >= 88 ? 4 : p.overall >= 80 ? 3 : p.age >= 30 ? 2 : 3;
   const c = suggestedContract(p.overall, p.age, years, p.position);
-  const signingBonus = Math.round(c.annualSalary * years * 0.14);
+  const signingBonus = c.signingBonus;
   return {
     years,
     annualSalary: c.annualSalary,
     signingBonus,
-    totalValue: c.annualSalary * years + Math.round(signingBonus * 0.15),
+    totalValue: c.annualSalary * years + signingBonus,
   };
 }
 

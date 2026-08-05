@@ -40,7 +40,15 @@ export type CalendarKind =
   | 'contractNegotiations'
   | 'contractDeadline';
 
-export type PlayNowAction = 'freeAgency' | 'draft' | 'roster' | 'coaches' | 'gameday' | 'resolve' | 'standings';
+export type PlayNowAction =
+  | 'freeAgency'
+  | 'draft'
+  | 'roster'
+  | 'coaches'
+  | 'gameday'
+  | 'resolve'
+  | 'standings'
+  | 'contracts';
 
 export interface CalendarSlot {
   index: number;
@@ -229,7 +237,7 @@ const DEFS: SlotDef[] = [
     'Contract Negotiations for Expiring Contracts',
     'Contracts',
     'offseason',
-    'resolve',
+    'contracts',
     'NEGOTIATE',
   ),
   slot(
@@ -237,7 +245,7 @@ const DEFS: SlotDef[] = [
     'Last Chance for Contract Negotiations',
     'Deadline',
     'offseason',
-    'resolve',
+    'contracts',
     'DEADLINE',
   ),
 ];

@@ -3397,6 +3397,189 @@ table.data tr:hover td {
   font-size: 0.78rem;
 }
 
+
+.offer-form {
+  margin-top: 0.55rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--fa-line, var(--line));
+  background: rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.offer-form h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+}
+
+.offer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+}
+
+.offer-stepper,
+.offer-money-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.offer-stepper strong {
+  min-width: 1.6rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--chalk);
+}
+
+.offer-stepper button,
+.offer-money-row button {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--chalk);
+  padding: 0.25rem 0.45rem;
+  font-size: 0.72rem;
+  border-radius: 3px;
+}
+
+.offer-money-row input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line);
+  color: var(--chalk);
+  padding: 0.35rem 0.45rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85rem;
+}
+
+.offer-summary {
+  margin: 0.15rem 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.offer-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.2rem;
+}
+
+.offer-summary dt {
+  color: var(--chalk-dim);
+}
+
+.offer-summary dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.offer-lean {
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.offer-lean.lean-likely {
+  color: #3ddc84;
+}
+
+.offer-lean.lean-possible {
+  color: var(--amber, #f0a202);
+}
+
+.offer-lean.lean-unlikely {
+  color: #e63946;
+}
+
+.contracts-intro {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  color: var(--chalk-dim);
+  flex-shrink: 0;
+}
+
+.contracts-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 0.45rem;
+  overflow: hidden;
+}
+
+.contracts-list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.contracts-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--fa-line, var(--line));
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+.contracts-row.selected,
+.contracts-row:hover {
+  border-color: var(--amber);
+  background: rgba(240, 162, 2, 0.12);
+}
+
+.contracts-row-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.contracts-row-id strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.contracts-row-id small,
+.contracts-row-ask {
+  font-size: 0.7rem;
+  color: var(--chalk-dim);
+}
+
+.contracts-detail {
+  min-height: 0;
+  overflow: auto;
+}
+
+.contracts-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+  line-height: 1.35;
+}
+
+@media (max-width: 800px) {
+  .contracts-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .fa-offer {
   margin-top: auto;
   width: 100%;

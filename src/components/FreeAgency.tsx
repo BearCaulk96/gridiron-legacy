@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react';
-import type { LeagueState, Player, Position } from '../game/types';
+import type { ContractOfferTerms, LeagueState, Player, Position } from '../game/types';
 import { currentCalendar } from '../game/calendar';
 import { playerName } from '../game/generate';
 import { positionalNeed } from '../game/ratings';
@@ -21,9 +21,11 @@ import {
   type Interest,
   type Progression,
 } from '../game/freeAgencyMarket';
+import { ContractOfferForm } from './ContractOfferForm';
+
 interface Props {
   state: LeagueState;
-  onSign: (id: string) => void;
+  onSign: (id: string, offer: ContractOfferTerms) => void;
   onFinish: () => void;
   onBack: () => void;
 }
@@ -401,14 +403,14 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="fa-offer"
+              <ContractOfferForm
+                key={selected.id}
+                state={state}
+                player={selected}
                 disabled={!open}
-                onClick={() => onSign(selected.id)}
-              >
-                {open ? 'MAKE CONTRACT OFFER' : 'FREE AGENCY CLOSED'}
-              </button>
+                disabledReason="FREE AGENCY CLOSED"
+                onSubmit={(offer) => onSign(selected.id, offer)}
+              />
             </>
           ) : (
             <p className="fa-empty">Select a free agent to review.</p>

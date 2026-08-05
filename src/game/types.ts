@@ -33,8 +33,17 @@ export type Division = 'North' | 'South' | 'East' | 'West';
 export interface Contract {
   years: number;
   annualSalary: number;
+  /** Total signing bonus; cap hit prorates this across `years`. */
+  signingBonus: number;
   guaranteed: number;
   yearsRemaining: number;
+}
+
+/** User-built offer terms for FA / re-sign negotiations. */
+export interface ContractOfferTerms {
+  years: number;
+  annualSalary: number;
+  signingBonus: number;
 }
 
 export interface Player {

@@ -185,12 +185,15 @@ export function HeadOffice({
   const artUrl = theme.hasArt ? `${import.meta.env.BASE_URL}offices/${team.id}.jpg` : null;
 
   const draftOpen = cal.kind === 'draft' && isDraftInProgress(state);
+  const contractsOpen = cal.kind === 'contractNegotiations' || cal.kind === 'contractDeadline';
 
-  const primaryMode: 'play' | 'draft' | 'advance' = userGame
+  const primaryMode: 'play' | 'draft' | 'contracts' | 'advance' = userGame
     ? 'play'
     : draftOpen
       ? 'draft'
-      : 'advance';
+      : contractsOpen
+        ? 'contracts'
+        : 'advance';
 
   const runPrimary = () => {
     if (primaryMode === 'play') {
@@ -201,17 +204,28 @@ export function HeadOffice({
       onOpen('draft');
       return;
     }
+    if (primaryMode === 'contracts') {
+      onOpen('contracts');
+      return;
+    }
     onAdvanceCalendar();
   };
 
   const primaryLabel =
-    primaryMode === 'play' ? 'Play Now' : primaryMode === 'draft' ? 'Draft Night' : 'Advance Week';
+    primaryMode === 'play'
+      ? 'Play Now'
+      : primaryMode === 'draft'
+        ? 'Draft Night'
+        : primaryMode === 'contracts'
+          ? 'Negotiate'
+          : 'Advance Week';
 
   const primaryDetail = (() => {
     if (primaryMode === 'play' && oppTeam && currentGame) {
       return `${vsLabel(currentGame, team.id)} ${oppTeam.name.toUpperCase()}`;
     }
     if (primaryMode === 'draft') return 'ENTER THE DRAFT';
+    if (primaryMode === 'contracts') return 'EXPIRING CONTRACTS';
     if (cal.kind === 'draft') return 'DRAFT COMPLETE';
     return cal.shortTitle.toUpperCase();
   })();

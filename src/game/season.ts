@@ -5,8 +5,10 @@ import { getDifficulty } from './difficulty';
 import { positionalNeed } from './ratings';
 import {
   freeAgents,
+  formatMoney,
   maxAllowedCap,
   OFFSEASON_ROSTER_LIMIT,
+  playerCapHit,
   refreshTeamCapHits,
   rosterOpenings,
   rosterPlayers,
@@ -15,6 +17,7 @@ import {
   teamCapHit,
   teamCapSpace,
 } from './salary';
+import { buildContract, evaluateContractOffer, offerCapHit } from './contracts';
 import { applyCompletedGame, describeGame, simulateGame } from './simulation';
 import {
   CALENDAR_LENGTH,
@@ -311,10 +314,14 @@ function resolveNonGameWeek(state: LeagueState, slot: CalendarSlot): void {
       state.messages.unshift(`${label}: Vacant coach and GM chairs are filled around the league.`);
       break;
     case 'contractNegotiations':
-      state.messages.unshift(`${label}: Expiring contracts hit the table.`);
+      state.messages.unshift(
+        `${label}: Expiring contracts hit the table — open Negotiations to re-sign your guys.`,
+      );
       break;
     case 'contractDeadline':
-      state.messages.unshift(`${label}: Final contract decisions lock in before Free Agency.`);
+      state.messages.unshift(
+        `${label}: Last chance to lock extensions before Free Agency.`,
+      );
       break;
     case 'freeAgency':
       seedFreeAgencyMarket(state);
@@ -573,7 +580,11 @@ export function completeOffseasonToNextSeason(state: LeagueState): void {
   rollToNextSeason(state);
 }
 
-export function signFreeAgent(state: LeagueState, playerId: string, years = 2): string | null {
+export function signFreeAgent(
+  state: LeagueState,
+  playerId: string,
+  offer: { years: number; annualSalary: number; signingBonus: number },
+): string | null {
   const player = state.players[playerId];
   if (!player || player.teamId || player.isProspect) return 'Player unavailable.';
   if (state.phase !== 'freeAgency') return 'Free agency is not open this week.';
@@ -581,18 +592,58 @@ export function signFreeAgent(state: LeagueState, playerId: string, years = 2): 
     return `Roster is full (${OFFSEASON_ROSTER_LIMIT}). Cut players before signing.`;
   }
 
-  const contract = suggestedContract(player.overall, player.age, years, player.position);
-  const projected = teamCapHit(state, state.userTeamId) + contract.annualSalary;
+  const verdict = evaluateContractOffer(state, player, offer);
+  if (!verdict.accept) return verdict.message;
+
+  const contract = buildContract(offer, player);
+  const projected = teamCapHit(state, state.userTeamId) + offerCapHit(offer);
   if (projected > maxAllowedCap(state)) {
-    return 'Signing would exceed the $300M salary cap for this difficulty.';
+    return 'Signing would exceed the salary cap for this difficulty.';
   }
 
   player.teamId = state.userTeamId;
-  player.contract = { ...contract, yearsRemaining: years };
-  player.morale = Math.min(99, player.morale + 8);
+  player.contract = contract;
+  player.morale = Math.min(99, player.morale + (verdict.score >= 1.05 ? 10 : 6));
   refreshTeamCapHits(state);
   state.messages.unshift(
-    `Signed ${playerName(player)} for ${years} yr / $${(contract.annualSalary / 1e6).toFixed(1)}M.`,
+    `Signed ${playerName(player)} — ${contract.years} yr / ${formatMoney(contract.annualSalary)} AAV + ${formatMoney(contract.signingBonus)} SB.`,
+  );
+  return null;
+}
+
+/** Extend an expiring roster player during March negotiations. */
+export function resignPlayer(
+  state: LeagueState,
+  playerId: string,
+  offer: { years: number; annualSalary: number; signingBonus: number },
+): string | null {
+  const player = state.players[playerId];
+  if (!player || player.teamId !== state.userTeamId || player.isProspect) {
+    return 'Player is not on your roster.';
+  }
+  if (!player.contract || player.contract.yearsRemaining !== 1) {
+    return 'Only players in the final year of their deal can be re-signed now.';
+  }
+  const cal = currentCalendar(state);
+  if (cal.kind !== 'contractNegotiations' && cal.kind !== 'contractDeadline') {
+    return 'Contract negotiations are not open this week.';
+  }
+
+  const verdict = evaluateContractOffer(state, player, offer, { resigning: true });
+  if (!verdict.accept) return verdict.message;
+
+  const oldHit = playerCapHit(player);
+  const contract = buildContract(offer, player);
+  const projected = teamCapHit(state, state.userTeamId) - oldHit + offerCapHit(offer);
+  if (projected > maxAllowedCap(state)) {
+    return 'Extension would exceed the salary cap for this difficulty.';
+  }
+
+  player.contract = contract;
+  player.morale = Math.min(99, player.morale + 7);
+  refreshTeamCapHits(state);
+  state.messages.unshift(
+    `Re-signed ${playerName(player)} — ${contract.years} yr / ${formatMoney(contract.annualSalary)} AAV + ${formatMoney(contract.signingBonus)} SB.`,
   );
   return null;
 }
@@ -623,8 +674,9 @@ export function aiSignFreeAgents(state: LeagueState): void {
     const target = agents.find((p) => {
       if (p.teamId) return false;
       if (!needs.slice(0, 4).includes(p.position)) return false;
-      const sal = suggestedContract(p.overall, p.age, 2, p.position).annualSalary;
-      return teamCapHit(state, team.id) + sal <= maxAllowedCap(state);
+      const c = suggestedContract(p.overall, p.age, 2, p.position);
+      const hit = c.annualSalary + Math.round(c.signingBonus / c.years);
+      return teamCapHit(state, team.id) + hit <= maxAllowedCap(state);
     });
     if (!target) continue;
     const c = suggestedContract(target.overall, target.age, 2, target.position);
