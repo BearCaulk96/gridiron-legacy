@@ -152,7 +152,6 @@ export function FreeAgency({ state, onSign, onFinish, onBack }: Props) {
             disabledReason="FREE AGENCY CLOSED"
             onSubmit={(offer) => {
               onSign(activeDeal.id, offer);
-              setNegotiateId(null);
             }}
           />
         </div>
