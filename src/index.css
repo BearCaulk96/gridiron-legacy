@@ -2828,6 +2828,277 @@ table.data tr:hover td {
   color: var(--chalk);
 }
 
+/* Mobile list → negotiate redesign */
+.fa-list-top,
+.fa-neg-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fa-list-heading h1,
+.fa-neg-title h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  font-size: clamp(1.15rem, 4.8vw, 1.55rem);
+  line-height: 1.05;
+  text-align: center;
+}
+
+.fa-list-heading p,
+.fa-neg-title .fa-eyebrow {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--chalk-dim);
+}
+
+.fa-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.65rem;
+  color: var(--amber);
+}
+
+.fa-pos-strip {
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+  flex-shrink: 0;
+  padding-bottom: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fa-pos-strip button {
+  flex: 0 0 auto;
+  border: 1px solid var(--fa-line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--chalk-dim);
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fa-pos-strip button.active {
+  color: #0a1018;
+  background: var(--amber);
+  border-color: var(--amber);
+  font-weight: 700;
+}
+
+.fa-agent-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.fa-agent-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto;
+  gap: 0.45rem 0.55rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--fa-line);
+  background: var(--fa-panel);
+  color: inherit;
+  border-radius: 6px;
+}
+
+.fa-agent-row:hover,
+.fa-agent-row:focus-visible {
+  border-color: color-mix(in srgb, var(--fa-primary) 55%, var(--amber));
+  background: color-mix(in srgb, var(--fa-primary) 18%, rgba(10, 16, 24, 0.92));
+}
+
+.fa-agent-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.fa-agent-name {
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+  font-size: 0.98rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fa-agent-meta {
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+}
+
+.fa-agent-ratings,
+.fa-neg-ratings {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.fa-agent-ratings span,
+.fa-neg-ratings span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.fa-agent-ratings small,
+.fa-neg-ratings small {
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  color: var(--chalk-dim);
+}
+
+.fa-agent-ratings b,
+.fa-neg-ratings b {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.fa-agent-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  justify-content: flex-end;
+}
+
+.fa-agent-traits span {
+  min-width: 1.15rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 0.12rem 0.2rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fa-agent-interest {
+  justify-self: end;
+}
+
+.fa-negotiate .fa-neg-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-bottom: 0.5rem;
+}
+
+.fa-neg-player {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--fa-line);
+  background: var(--fa-panel);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.fa-neg-id {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fa-neg-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.fa-trait-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--fa-line);
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 4px;
+  min-width: 3.4rem;
+}
+
+.fa-trait-chip small {
+  font-size: 0.58rem;
+  color: var(--chalk-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fa-trait-chip strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fa-neg-interest p {
+  margin: 0 0 0.25rem;
+  font-size: 0.82rem;
+}
+
+.fa-neg-interest ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--chalk-dim);
+  font-size: 0.78rem;
+}
+
+.fa-cap-chip {
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .fa-agent-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'main ratings'
+      'traits interest';
+  }
+
+  .fa-agent-main {
+    grid-area: main;
+  }
+
+  .fa-agent-ratings {
+    grid-area: ratings;
+  }
+
+  .fa-agent-traits {
+    grid-area: traits;
+    justify-content: flex-start;
+  }
+
+  .fa-agent-interest {
+    grid-area: interest;
+  }
+}
+
 .fa-top {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1.1fr auto;
