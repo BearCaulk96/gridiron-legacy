@@ -4197,13 +4197,37 @@ table.data tr:hover td {
   text-overflow: ellipsis;
 }
 
-.setup-selected-copy span {
+.setup-selected-copy > span {
   margin-top: 0.1rem;
   font-size: 0.62rem;
   color: var(--chalk-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.setup-color-row {
+  display: flex;
+  gap: 0.28rem;
+  margin-top: 0.35rem;
+}
+
+.setup-color-row span {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.setup-color-row-sm {
+  margin-top: 0.2rem;
+  gap: 0.18rem;
+}
+
+.setup-color-row-sm span {
+  width: 0.55rem;
+  height: 0.55rem;
 }
 
 .setup-conf {
@@ -4229,27 +4253,29 @@ table.data tr:hover td {
 .setup-div {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.3rem;
+  gap: 0.28rem;
+  padding: 0.35rem;
   background: var(--panel);
   border: 1px solid var(--line);
 }
 
 .setup-team-grid {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.28rem;
 }
 
 .setup-team {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.35rem;
+  gap: 0.55rem;
+  padding: 0.45rem 0.5rem;
   border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--team-primary, #fff) 22%, transparent), transparent 58%),
+    rgba(255, 255, 255, 0.02);
   text-align: left;
-  min-height: 2.25rem;
+  min-height: 3.4rem;
 }
 
 .setup-team span {
@@ -4261,13 +4287,18 @@ table.data tr:hover td {
 .setup-team strong {
   font-family: var(--font-display);
   letter-spacing: 0.04em;
-  font-size: 0.85rem;
-  line-height: 1;
+  font-size: 0.82rem;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setup-team small {
   font-size: 0.58rem;
   color: var(--chalk-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4275,7 +4306,10 @@ table.data tr:hover td {
 
 .setup-team.selected {
   border-color: var(--amber);
-  background: rgba(240, 162, 2, 0.12);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--team-primary, #fff) 32%, transparent), rgba(240, 162, 2, 0.12) 60%),
+    rgba(240, 162, 2, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(240, 162, 2, 0.25);
 }
 
 @media (max-width: 900px) {

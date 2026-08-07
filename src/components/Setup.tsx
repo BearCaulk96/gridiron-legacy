@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { DIFFICULTIES } from '../game/difficulty';
 import { TEAM_TEMPLATES } from '../game/teams';
 import type { Conference, Difficulty, DifficultyConfig } from '../game/types';
@@ -77,7 +77,7 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
         </header>
 
         <div className="setup-picked">
-          <TeamLogo team={team} size={28} />
+          <TeamLogo team={team} size={52} />
           <div className="setup-selected-copy">
             <strong>
               {team.city} {team.name}
@@ -85,6 +85,11 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
             <span>
               {team.conference} · {team.division}
             </span>
+            <div className="setup-color-row" aria-label="Team colors">
+              <span style={{ background: team.primary }} />
+              <span style={{ background: team.secondary }} />
+              <span style={{ background: team.accent }} />
+            </div>
           </div>
         </div>
 
@@ -143,7 +148,7 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
 
       <section className="setup-franchise">
         <div className="setup-selected">
-          <TeamLogo team={team} size={28} />
+          <TeamLogo team={team} size={56} />
           <div className="setup-selected-copy">
             <strong>
               {team.city} {team.name}
@@ -151,6 +156,11 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
             <span>
               {team.conference} · {team.division}
             </span>
+            <div className="setup-color-row" aria-label="Team colors">
+              <span style={{ background: team.primary }} />
+              <span style={{ background: team.secondary }} />
+              <span style={{ background: team.accent }} />
+            </div>
           </div>
         </div>
         <div className="setup-conf" role="tablist" aria-label="Conference">
@@ -184,13 +194,24 @@ export function Setup({ initialTeamId, onBack, onStart }: Props) {
                     type="button"
                     className={`setup-team ${teamId === t.id ? 'selected' : ''}`}
                     onClick={() => setTeamId(t.id)}
+                    style={
+                      {
+                        '--team-primary': t.primary,
+                        '--team-secondary': t.secondary,
+                      } as CSSProperties
+                    }
                   >
-                    <TeamLogo team={t} size={22} />
+                    <TeamLogo team={t} size={44} />
                     <span>
-                      <strong>{t.abbrev}</strong>
-                      <small>
+                      <strong>
                         {t.city} {t.name}
-                      </small>
+                      </strong>
+                      <small>{t.abbrev}</small>
+                      <div className="setup-color-row setup-color-row-sm" aria-hidden="true">
+                        <span style={{ background: t.primary }} />
+                        <span style={{ background: t.secondary }} />
+                        <span style={{ background: t.accent }} />
+                      </div>
                     </span>
                   </button>
                 ))}
