@@ -252,6 +252,7 @@ export function TitleScreen({ hasSave, onNew, onContinue }: Props) {
                 <p>
                   <strong>Gridiron Dynasty</strong>
                 </p>
+                <p>A Bear Caulk Game Studios production</p>
                 <p>United Football Association · Franchise simulation</p>
                 <p>Designed for managers who build through drafts, trades, coaching, and the cap — not cash shop shortcuts.</p>
               </>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { TitleScreen } from './components/TitleScreen';
 import { Setup } from './components/Setup';
 import { Shell } from './components/Shell';
@@ -13,13 +13,19 @@ import { Standings } from './components/Standings';
 import { Cap } from './components/Cap';
 import { GameDay } from './components/GameDay';
 import { useLeague } from './hooks/useLeague';
+import { useDeveloperSplash } from './hooks/useDeveloperSplash';
 import { hasSave } from './game/save';
 
 export default function App() {
   const game = useLeague();
   const [setupTeamId, setSetupTeamId] = useState<string | undefined>();
+  const [splashDone, setSplashDone] = useState(false);
+  const onSplashDone = useCallback(() => setSplashDone(true), []);
+  useDeveloperSplash(onSplashDone);
 
-  if (game.screen === 'landing') {
+  // Pre-render the title under the HTML splash so the fade-out handoff is seamless.
+  // Splash runs once per cold boot — returning to the title from in-game skips it.
+  if (!splashDone || game.screen === 'landing') {
     return (
       <>
         <TitleScreen
